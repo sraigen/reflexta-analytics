@@ -1,0 +1,53 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15
+    container_name: analytics_postgres
+    environment:
+      POSTGRES_DB: Test
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: Sit@1125
+      POSTGRES_HOST_AUTH_METHOD: trust
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/schema.sql:/docker-entrypoint-initdb.d/schema.sql
+    networks:
+      - analytics_network
+    restart: unless-stopped
+
+  # Streamlit Application
+  streamlit:
+    build: .
+    container_name: analytics_streamlit
+    ports:
+      - "8501:8501"
+    environment:
+      - DATABASE_URL=postgresql+psycopg://postgres:Sit%401125@postgres:5432/Test
+    volumes:
+      - ./.streamlit:/app/.streamlit
+    depends_on:
+      - postgres
+    networks:
+      - analytics_network
+    restart: unless-stopped
+
+  # Redis for caching (optional)
+  redis:
+    image: redis:7-alpine
+    container_name: analytics_redis
+    ports:
+      - "6379:6379"
+    networks:
+      - analytics_network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+
+networks:
+  analytics_network:
+    driver: bridge
