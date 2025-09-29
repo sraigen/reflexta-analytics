@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Global AI Chat Bot for Reflexta Analytics Platform.
-Provides a floating AI chat interface available on all screens.
+Floating AI Chat Bot for Reflexta Analytics Platform.
+Provides a floating AI chat interface that's always visible.
 """
 
 import streamlit as st
@@ -9,26 +9,26 @@ from datetime import datetime
 from src.enhanced_ai_assistant import get_enhanced_ai_assistant
 
 
-def render_global_ai_chat():
-    """Render a global floating AI chat interface."""
+def render_floating_ai_chat():
+    """Render a floating AI chat interface that's always visible."""
     
     # Initialize chat history if not exists
-    if "global_chat_history" not in st.session_state:
-        st.session_state.global_chat_history = []
+    if "floating_chat_history" not in st.session_state:
+        st.session_state.floating_chat_history = []
     
     # Initialize AI assistant if not exists
-    if "global_ai_assistant" not in st.session_state:
-        st.session_state.global_ai_assistant = get_enhanced_ai_assistant()
+    if "floating_ai_assistant" not in st.session_state:
+        st.session_state.floating_ai_assistant = get_enhanced_ai_assistant()
     
     # Initialize chat state
-    if "global_chat_open" not in st.session_state:
-        st.session_state.global_chat_open = False
+    if "floating_chat_open" not in st.session_state:
+        st.session_state.floating_chat_open = False
     
-    # Global CSS for floating AI chat
+    # Floating AI Chat CSS
     st.markdown("""
     <style>
     /* Floating AI Chat Button */
-    .ai-chat-toggle {
+    .floating-ai-button {
         position: fixed;
         bottom: 30px;
         right: 30px;
@@ -49,12 +49,12 @@ def render_global_ai_chat():
         animation: pulse 2s infinite;
     }
     
-    .ai-chat-toggle:hover {
+    .floating-ai-button:hover {
         transform: scale(1.1);
         box-shadow: 0 12px 35px rgba(99, 102, 241, 0.6);
     }
     
-    .ai-chat-toggle:active {
+    .floating-ai-button:active {
         transform: scale(0.95);
     }
     
@@ -65,7 +65,7 @@ def render_global_ai_chat():
     }
     
     /* Floating Chat Panel */
-    .ai-chat-panel {
+    .floating-chat-panel {
         position: fixed;
         top: 0;
         right: 0;
@@ -82,12 +82,12 @@ def render_global_ai_chat():
         backdrop-filter: blur(10px);
     }
     
-    .ai-chat-panel.open {
+    .floating-chat-panel.open {
         transform: translateX(0);
     }
     
     /* Chat Header */
-    .ai-chat-header {
+    .floating-chat-header {
         background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 25%, #16213e 50%, #0f3460 75%, #533483 100%);
         color: white;
         padding: 1.5rem;
@@ -96,64 +96,21 @@ def render_global_ai_chat():
         overflow: hidden;
     }
     
-    .ai-chat-header::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: linear-gradient(45deg, rgba(255,255,255,0.1) 0%, transparent 50%);
-        pointer-events: none;
-    }
-    
-    .ai-chat-header h3 {
+    .floating-chat-header h3 {
         margin: 0;
         font-size: 1.4rem;
         font-weight: 700;
         text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-        position: relative;
-        z-index: 1;
-        background: linear-gradient(45deg, #ffffff, #e2e8f0);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
     }
     
-    .ai-chat-header p {
+    .floating-chat-header p {
         margin: 0.5rem 0 0 0;
         font-size: 0.9rem;
         opacity: 0.9;
-        position: relative;
-        z-index: 1;
-    }
-    
-    .ai-chat-close {
-        position: absolute;
-        top: 1rem;
-        right: 1rem;
-        background: rgba(255, 255, 255, 0.2);
-        border: none;
-        color: white;
-        width: 32px;
-        height: 32px;
-        border-radius: 50%;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 1.2rem;
-        transition: all 0.3s ease;
-        z-index: 2;
-    }
-    
-    .ai-chat-close:hover {
-        background: rgba(255, 255, 255, 0.3);
-        transform: scale(1.1);
     }
     
     /* Chat Messages */
-    .ai-chat-messages {
+    .floating-chat-messages {
         flex: 1;
         padding: 1rem;
         overflow-y: auto;
@@ -161,7 +118,7 @@ def render_global_ai_chat():
         max-height: calc(100vh - 200px);
     }
     
-    .ai-chat-message {
+    .floating-chat-message {
         margin-bottom: 1rem;
         padding: 0.8rem 1rem;
         border-radius: 12px;
@@ -170,7 +127,7 @@ def render_global_ai_chat():
         animation: slideIn 0.3s ease-out;
     }
     
-    .ai-chat-message.user {
+    .floating-chat-message.user {
         background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
         color: white;
         margin-left: auto;
@@ -178,7 +135,7 @@ def render_global_ai_chat():
         box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
     }
     
-    .ai-chat-message.ai {
+    .floating-chat-message.ai {
         background: linear-gradient(135deg, #ffffff 0%, #f1f5f9 100%);
         color: #1e293b;
         margin-right: auto;
@@ -186,7 +143,7 @@ def render_global_ai_chat():
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     }
     
-    .ai-chat-message strong {
+    .floating-chat-message strong {
         display: block;
         margin-bottom: 0.5rem;
         font-size: 0.9rem;
@@ -194,13 +151,13 @@ def render_global_ai_chat():
     }
     
     /* Chat Input */
-    .ai-chat-input {
+    .floating-chat-input {
         padding: 1rem;
         background: white;
         border-top: 1px solid rgba(148, 163, 184, 0.2);
     }
     
-    .ai-chat-input input {
+    .floating-chat-input input {
         width: 100%;
         padding: 0.8rem 1rem;
         border: 2px solid #e2e8f6;
@@ -211,18 +168,18 @@ def render_global_ai_chat():
         margin-bottom: 0.8rem;
     }
     
-    .ai-chat-input input:focus {
+    .floating-chat-input input:focus {
         outline: none;
         border-color: #6366f1;
         box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
     }
     
-    .ai-chat-buttons {
+    .floating-chat-buttons {
         display: flex;
         gap: 0.5rem;
     }
     
-    .ai-chat-btn {
+    .floating-chat-btn {
         flex: 1;
         padding: 0.6rem 1rem;
         border: none;
@@ -234,35 +191,35 @@ def render_global_ai_chat():
         text-align: center;
     }
     
-    .ai-chat-btn.primary {
+    .floating-chat-btn.primary {
         background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
         color: white;
         box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
     }
     
-    .ai-chat-btn.primary:hover {
+    .floating-chat-btn.primary:hover {
         transform: translateY(-2px);
         box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
     }
     
-    .ai-chat-btn.secondary {
+    .floating-chat-btn.secondary {
         background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f6 100%);
         color: #64748b;
         border: 1px solid rgba(148, 163, 184, 0.2);
     }
     
-    .ai-chat-btn.secondary:hover {
+    .floating-chat-btn.secondary:hover {
         background: linear-gradient(135deg, #e2e8f6 0%, #cbd5e1 100%);
     }
     
     /* Suggested Questions */
-    .ai-chat-suggestions {
+    .floating-chat-suggestions {
         padding: 0.5rem 1rem;
         background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
         border-top: 1px solid rgba(251, 191, 36, 0.3);
     }
     
-    .ai-chat-suggestion {
+    .floating-chat-suggestion {
         display: inline-block;
         margin: 0.2rem;
         padding: 0.4rem 0.8rem;
@@ -276,7 +233,7 @@ def render_global_ai_chat():
         text-align: center;
     }
     
-    .ai-chat-suggestion:hover {
+    .floating-chat-suggestion:hover {
         background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
         transform: translateY(-1px);
         box-shadow: 0 2px 8px rgba(251, 191, 36, 0.3);
@@ -294,111 +251,67 @@ def render_global_ai_chat():
     }
     
     /* Dark mode compatibility */
-    .stApp[data-theme="dark"] .ai-chat-panel {
+    .stApp[data-theme="dark"] .floating-chat-panel {
         background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
         border-left: 1px solid rgba(148, 163, 184, 0.3);
     }
     
-    .stApp[data-theme="dark"] .ai-chat-messages {
+    .stApp[data-theme="dark"] .floating-chat-messages {
         background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
     }
     
-    .stApp[data-theme="dark"] .ai-chat-message.ai {
+    .stApp[data-theme="dark"] .floating-chat-message.ai {
         background: linear-gradient(135deg, #334155 0%, #475569 100%);
         color: #f1f5f9;
         border: 1px solid rgba(148, 163, 184, 0.3);
     }
     
-    .stApp[data-theme="dark"] .ai-chat-input {
+    .stApp[data-theme="dark"] .floating-chat-input {
         background: #1e293b;
         border-top: 1px solid rgba(148, 163, 184, 0.3);
     }
     
-    .stApp[data-theme="dark"] .ai-chat-input input {
+    .stApp[data-theme="dark"] .floating-chat-input input {
         background: linear-gradient(135deg, #334155 0%, #475569 100%);
         border: 2px solid rgba(148, 163, 184, 0.3);
         color: #f1f5f9;
     }
     
-    .stApp[data-theme="dark"] .ai-chat-input input::placeholder {
+    .stApp[data-theme="dark"] .floating-chat-input input::placeholder {
         color: #94a3b8;
     }
     </style>
     """, unsafe_allow_html=True)
     
     # Floating AI Chat Toggle Button (always visible)
-    st.markdown("""
-    <div style="position: fixed; bottom: 30px; right: 30px; z-index: 1000;">
-        <button onclick="toggleAIChat()" style="
-            width: 60px; height: 60px; 
-            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); 
-            border: none; border-radius: 50%; 
-            color: white; font-size: 24px; 
-            cursor: pointer; box-shadow: 0 8px 25px rgba(99, 102, 241, 0.4);
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            animation: pulse 2s infinite;
-        " onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">
-            🤖
-        </button>
-    </div>
+    if st.button("🤖", key="floating_ai_toggle", help="Open AI Assistant", type="primary"):
+        st.session_state.floating_chat_open = not st.session_state.floating_chat_open
+        st.rerun()
     
-    <script>
-    function toggleAIChat() {
-        const panel = document.getElementById('ai-chat-panel');
-        if (panel.style.display === 'none' || panel.style.display === '') {
-            panel.style.display = 'block';
-        } else {
-            panel.style.display = 'none';
-        }
-    }
-    </script>
-    """, unsafe_allow_html=True)
-    
-    # Floating Chat Panel (initially hidden)
-    st.markdown("""
-    <div id="ai-chat-panel" style="display: none; position: fixed; top: 0; right: 0; width: 400px; height: 100vh; 
-                background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%); 
-                border-left: 1px solid rgba(148, 163, 184, 0.2); 
-                box-shadow: -8px 0 32px rgba(0, 0, 0, 0.15); z-index: 1001; 
-                display: flex; flex-direction: column; transform: translateX(0); 
-                transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); backdrop-filter: blur(10px);">
-        <div style="background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 25%, #16213e 50%, #0f3460 75%, #533483 100%); 
-                    color: white; padding: 1.5rem; text-align: center; position: relative; overflow: hidden;">
-            <button onclick="toggleAIChat()" style="position: absolute; top: 1rem; right: 1rem; 
-                        background: rgba(255, 255, 255, 0.2); border: none; color: white; 
-                        width: 32px; height: 32px; border-radius: 50%; cursor: pointer; 
-                        display: flex; align-items: center; justify-content: center; font-size: 1.2rem;">×</button>
-            <h3 style="margin: 0; font-size: 1.4rem; font-weight: 700;">🤖 AI Assistant</h3>
-            <p style="margin: 0.5rem 0 0 0; font-size: 0.9rem; opacity: 0.9;">Your Analytics Companion</p>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
-    
-    # Chat interface (only render if chat is open)
-    if st.session_state.global_chat_open:
+    # Floating Chat Panel
+    if st.session_state.floating_chat_open:
         st.markdown("""
-        <div class="ai-chat-panel open">
-            <div class="ai-chat-header">
-                <button class="ai-chat-close" onclick="this.parentElement.parentElement.style.display='none'">×</button>
+        <div class="floating-chat-panel open">
+            <div class="floating-chat-header">
                 <h3>🤖 AI Assistant</h3>
                 <p>Your Analytics Companion</p>
             </div>
             
-            <div class="ai-chat-messages">
+            <div class="floating-chat-messages">
         """, unsafe_allow_html=True)
         
         # Display chat history
-        if st.session_state.global_chat_history:
-            for message in st.session_state.global_chat_history:
+        if st.session_state.floating_chat_history:
+            for message in st.session_state.floating_chat_history:
                 message_class = "user" if message['type'] == 'user' else "ai"
                 st.markdown(f"""
-                <div class="ai-chat-message {message_class}">
+                <div class="floating-chat-message {message_class}">
                     <strong>{'You' if message['type'] == 'user' else 'AI'}:</strong> {message['content']}
                 </div>
                 """, unsafe_allow_html=True)
         else:
             st.markdown("""
-            <div class="ai-chat-message ai">
+            <div class="floating-chat-message ai">
                 <strong>AI:</strong> Hello! I'm your AI assistant for Reflexta Analytics Platform. 
                 I can help you understand dashboards, KPIs, and provide insights about your data. 
                 How can I assist you today?
@@ -411,30 +324,30 @@ def render_global_ai_chat():
         user_input = st.text_input(
             "Ask me anything about the dashboard...",
             placeholder="e.g., What does 'Budget Utilization' mean?",
-            key="global_chat_input"
+            key="floating_chat_input"
         )
         
         # Action buttons
         col1, col2 = st.columns(2)
         
         with col1:
-            if st.button("💬 Ask AI", key="global_send_btn", use_container_width=True):
+            if st.button("💬 Ask AI", key="floating_send_btn", use_container_width=True):
                 if user_input and user_input.strip():
                     # Add user message
-                    st.session_state.global_chat_history.append({
+                    st.session_state.floating_chat_history.append({
                         'type': 'user',
                         'content': user_input,
                         'timestamp': datetime.now()
                     })
                     
                     # Get AI response
-                    if st.session_state.global_ai_assistant:
+                    if st.session_state.floating_ai_assistant:
                         try:
                             with st.spinner("🤖 AI is thinking..."):
-                                ai_response = st.session_state.global_ai_assistant.ask_ai(user_input)
+                                ai_response = st.session_state.floating_ai_assistant.ask_ai(user_input)
                             
                             # Add AI response
-                            st.session_state.global_chat_history.append({
+                            st.session_state.floating_chat_history.append({
                                 'type': 'ai',
                                 'content': ai_response,
                                 'timestamp': datetime.now()
@@ -449,21 +362,21 @@ def render_global_ai_chat():
                     st.warning("Please enter a question!")
         
         with col2:
-            if st.button("🗑️ Clear", key="global_clear_btn", use_container_width=True):
-                st.session_state.global_chat_history = []
+            if st.button("🗑️ Clear", key="floating_clear_btn", use_container_width=True):
+                st.session_state.floating_chat_history = []
                 st.rerun()
         
         # Suggested questions
-        if st.session_state.global_ai_assistant:
-            suggested_questions = st.session_state.global_ai_assistant.get_suggested_questions()
+        if st.session_state.floating_ai_assistant:
+            suggested_questions = st.session_state.floating_ai_assistant.get_suggested_questions()
             
             st.markdown("**💡 Quick Questions:**")
             
             # Show 4 suggested questions
             for i, question in enumerate(suggested_questions[:4]):
-                if st.button(f"💭 {question}", key=f"global_suggested_{i}", use_container_width=True):
+                if st.button(f"💭 {question}", key=f"floating_suggested_{i}", use_container_width=True):
                     # Auto-process the question
-                    st.session_state.global_chat_history.append({
+                    st.session_state.floating_chat_history.append({
                         'type': 'user',
                         'content': question,
                         'timestamp': datetime.now()
@@ -472,9 +385,9 @@ def render_global_ai_chat():
                     # Get AI response
                     try:
                         with st.spinner("🤖 AI is thinking..."):
-                            ai_response = st.session_state.global_ai_assistant.ask_ai(question)
+                            ai_response = st.session_state.floating_ai_assistant.ask_ai(question)
                         
-                        st.session_state.global_chat_history.append({
+                        st.session_state.floating_chat_history.append({
                             'type': 'ai',
                             'content': ai_response,
                             'timestamp': datetime.now()
@@ -487,12 +400,3 @@ def render_global_ai_chat():
             st.warning("AI Assistant not available. Please check your API configuration.")
         
         st.markdown("</div>", unsafe_allow_html=True)
-
-
-def render_ai_chat_button():
-    """Render the floating AI chat toggle button."""
-    st.markdown("""
-    <div class="ai-chat-toggle" onclick="document.querySelector('.ai-chat-panel').classList.toggle('open')">
-        🤖
-    </div>
-    """, unsafe_allow_html=True)
