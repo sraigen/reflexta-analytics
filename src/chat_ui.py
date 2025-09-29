@@ -102,26 +102,46 @@ def render_chat_interface():
                 </div>
                 """, unsafe_allow_html=True)
     
-    # Handle selected question
+    # Handle selected question - auto-process it
     if "selected_question" in st.session_state and st.session_state.selected_question:
-        # Use the selected question as the input
-        user_question = st.session_state.selected_question
-        # Clear the selected question to avoid repetition
-        st.session_state.selected_question = None
-    else:
-        # Chat input
-        user_question = st.text_input(
-            "Ask me anything about the dashboard...",
-            placeholder="e.g., What does 'Budget Utilization' mean?",
-            key="chat_input"
-        )
+        # Auto-process the selected question
+        selected_question = st.session_state.selected_question
+        st.session_state.selected_question = None  # Clear it
+        
+        # Add user message to history
+        st.session_state.chat_history.append({
+            'type': 'user',
+            'content': selected_question,
+            'timestamp': datetime.now()
+        })
+        
+        # Get AI response
+        try:
+            with st.spinner("🤖 AI is thinking..."):
+                ai_response = st.session_state.ai_assistant.ask_ai(selected_question)
+            
+            # Add AI response to history
+            st.session_state.chat_history.append({
+                'type': 'ai',
+                'content': ai_response,
+                'timestamp': datetime.now()
+            })
+        except Exception as e:
+            st.error(f"Error getting AI response: {str(e)}")
+    
+    # Regular chat input
+    user_question = st.text_input(
+        "Ask me anything about the dashboard...",
+        placeholder="e.g., What does 'Budget Utilization' mean?",
+        key="chat_input"
+    )
     
     # Chat buttons
     col1, col2 = st.columns(2)
     
     with col1:
         if st.button("💬 Ask AI", use_container_width=True, key="ask_ai_btn"):
-            if user_question.strip():
+            if user_question and user_question.strip():
                 # Add user message to history
                 st.session_state.chat_history.append({
                     'type': 'user',
@@ -130,18 +150,21 @@ def render_chat_interface():
                 })
                 
                 # Get AI response
-                with st.spinner("🤖 AI is thinking..."):
-                    ai_response = st.session_state.ai_assistant.ask_ai(user_question)
-                
-                # Add AI response to history
-                st.session_state.chat_history.append({
-                    'type': 'ai',
-                    'content': ai_response,
-                    'timestamp': datetime.now()
-                })
-                
-                # Rerun to refresh the interface
-                st.rerun()
+                try:
+                    with st.spinner("🤖 AI is thinking..."):
+                        ai_response = st.session_state.ai_assistant.ask_ai(user_question)
+                    
+                    # Add AI response to history
+                    st.session_state.chat_history.append({
+                        'type': 'ai',
+                        'content': ai_response,
+                        'timestamp': datetime.now()
+                    })
+                    
+                    # Rerun to refresh the interface
+                    st.rerun()
+                except Exception as e:
+                    st.error(f"Error getting AI response: {str(e)}")
             else:
                 st.warning("Please enter a question!")
     
