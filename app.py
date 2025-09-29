@@ -593,7 +593,7 @@ except FileNotFoundError:
     </div>
     """, unsafe_allow_html=True)
 
-# Sidebar filters
+# Sidebar - Company logo only
 with st.sidebar:
     # Company logo in sidebar
     try:
@@ -615,44 +615,6 @@ with st.sidebar:
         </div>
         """, unsafe_allow_html=True)
     
-    st.markdown("### Filters & Controls")
-    st.markdown("---")
-    
-    today = dt.date.today()
-    default_from = today - dt.timedelta(days=30)
-
-    st.markdown("**Date Range**")
-    from_dt = st.date_input("From Date", value=default_from, help="Select start date for analysis")
-    to_dt = st.date_input("To Date", value=today, help="Select end date for analysis")
-
-    st.markdown("**Department**")
-    department = st.selectbox(
-        "Select Department", 
-        options=["All", "Finance", "Procurement", "IT", "HR", "Operations", "Marketing", "Sales", "Legal"],
-        help="Filter data by specific department"
-    )
-    
-    st.markdown("**Module Focus**")
-    module_focus = st.selectbox(
-        "Select Module Focus",
-        options=["All Modules", "Finance Only", "Procurement Only", "Analytics Only"],
-        help="Focus on specific business modules"
-    )
-    
-    st.markdown("**Time Period**")
-    time_period = st.selectbox(
-        "Select Time Period",
-        options=["Last 30 Days", "Last 90 Days", "Last 6 Months", "Last Year", "Custom Range"],
-        help="Quick time period selection"
-    )
-    
-    st.markdown("**Data Quality**")
-    data_quality = st.selectbox(
-        "Data Quality Filter",
-        options=["All Data", "Complete Records Only", "Validated Data Only"],
-        help="Filter based on data completeness"
-    )
-    
     st.markdown("---")
     st.markdown("### Quick Actions")
     if st.button("Refresh Data", use_container_width=True):
@@ -663,32 +625,18 @@ with st.sidebar:
     
     st.markdown("---")
     st.markdown("### Navigation")
-    st.info("Use the filters above to customize your dashboard view. All charts and KPIs will update automatically.")
+    st.info("Navigate to specific dashboards for detailed analytics and filtering options.")
 
 if not health_check():
     st.error("Database connection failed. Please check your connection settings.")
     st.stop()
 
 try:
-    # Process time period selection
-    if time_period != "Custom Range":
-        if time_period == "Last 30 Days":
-            from_dt = today - dt.timedelta(days=30)
-        elif time_period == "Last 90 Days":
-            from_dt = today - dt.timedelta(days=90)
-        elif time_period == "Last 6 Months":
-            from_dt = today - dt.timedelta(days=180)
-        elif time_period == "Last Year":
-            from_dt = today - dt.timedelta(days=365)
-    
-    # Get department ID if specific department is selected
-    dept_id = None
-    if department != "All":
-        dept_mapping = {
-            "Finance": 1, "Procurement": 2, "IT": 3, "HR": 4, "Operations": 5,
-            "Marketing": 6, "Sales": 7, "Legal": 8
-        }
-        dept_id = dept_mapping.get(department)
+    # Default date range for main dashboard (last 30 days)
+    today = dt.date.today()
+    from_dt = today - dt.timedelta(days=30)
+    to_dt = today
+    dept_id = None  # Show all departments on main dashboard
     
     # KPI Section with professional styling
     st.markdown('<div class="section-header">Key Performance Indicators</div>', unsafe_allow_html=True)

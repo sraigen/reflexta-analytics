@@ -30,6 +30,74 @@ from src.ui import empty_state
 
 st.set_page_config(page_title="Procurement Dashboard", layout="wide")
 
+# Procurement Dashboard Filters
+st.markdown("### Procurement Filters")
+col1, col2, col3, col4 = st.columns(4)
+
+with col1:
+    from_date = st.date_input(
+        "From Date", 
+        value=dt.date.today() - dt.timedelta(days=30),
+        help="Select start date for analysis"
+    )
+
+with col2:
+    to_date = st.date_input(
+        "To Date", 
+        value=dt.date.today(),
+        help="Select end date for analysis"
+    )
+
+with col3:
+    department = st.selectbox(
+        "Department",
+        options=["All", "Finance", "Procurement", "IT", "HR", "Operations", "Marketing", "Sales", "Legal"],
+        help="Filter by specific department"
+    )
+
+with col4:
+    order_status = st.selectbox(
+        "Order Status",
+        options=["All", "Pending", "Approved", "In Progress", "Completed", "Cancelled"],
+        help="Filter by order status"
+    )
+
+# Additional filters
+st.markdown("**Additional Filters**")
+col1, col2, col3 = st.columns(3)
+
+with col1:
+    vendor = st.selectbox(
+        "Vendor",
+        options=["All"] + [f"Vendor {i}" for i in range(1, 11)],
+        help="Filter by specific vendor"
+    )
+
+with col2:
+    category = st.selectbox(
+        "Category",
+        options=["All", "Office Supplies", "IT Equipment", "Marketing", "Travel", "Utilities", "Professional Services", "Equipment", "Software", "Consulting", "Training"],
+        help="Filter by category"
+    )
+
+with col3:
+    priority = st.selectbox(
+        "Priority",
+        options=["All", "Low", "Medium", "High", "Urgent"],
+        help="Filter by priority level"
+    )
+
+# Get department ID if specific department is selected
+dept_id = None
+if department != "All":
+    dept_mapping = {
+        "Finance": 1, "Procurement": 2, "IT": 3, "HR": 4, "Operations": 5,
+        "Marketing": 6, "Sales": 7, "Legal": 8
+    }
+    dept_id = dept_mapping.get(department)
+
+st.markdown("---")
+
 # Professional CSS for Procurement Dashboard
 st.markdown("""
 <style>
@@ -52,9 +120,63 @@ st.markdown("""
     
     .procurement-header p {
         margin: 0.5rem 0 0 0;
-        font-size: 1rem;
+        font-size: 1.1rem;
         opacity: 0.9;
         font-weight: 300;
+    }
+    
+    .section-header {
+        background: linear-gradient(90deg, #e74c3c 0%, #c0392b 100%);
+        color: white;
+        padding: 0.8rem 1.2rem;
+        margin: 1.5rem 0 1rem 0;
+        border-radius: 6px;
+        font-weight: 500;
+        font-size: 1.1rem;
+        border-left: 4px solid #e74c3c;
+    }
+    
+    .metric-card {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        padding: 1.5rem;
+        border-radius: 8px;
+        border: 1px solid #dee2e6;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        text-align: center;
+        margin-bottom: 1rem;
+    }
+    
+    .metric-value {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #2c3e50;
+        margin-bottom: 0.5rem;
+    }
+    
+    .metric-label {
+        font-size: 0.9rem;
+        color: #6c757d;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .metric-change {
+        font-size: 0.8rem;
+        margin-top: 0.5rem;
+        padding: 0.2rem 0.5rem;
+        border-radius: 4px;
+        font-weight: 500;
+    }
+    
+    .metric-change.positive {
+        background-color: #d4edda;
+        color: #155724;
+    }
+    
+    .metric-change.negative {
+        background-color: #f8d7da;
+        color: #721c24;
     }
     
     /* Dark mode compatibility */
@@ -68,193 +190,47 @@ st.markdown("""
     }
     
     .stApp[data-theme="dark"] .procurement-header p {
-        color: #ecf0f1 !important;
+        color: rgba(255, 255, 255, 0.9) !important;
     }
     
-    .stApp[data-theme="dark"] .sidebar-logo {
-        background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+    .stApp[data-theme="dark"] .section-header {
+        background: linear-gradient(90deg, #e74c3c 0%, #c0392b 100%);
         color: white !important;
     }
     
-    .stApp[data-theme="dark"] .sidebar-logo h3 {
-        color: white !important;
-    }
-    
-    .stApp[data-theme="dark"] .sidebar-logo p {
-        color: rgba(255, 255, 255, 0.8) !important;
-    }
-    
-    .section-header {
-        background: linear-gradient(90deg, #34495e 0%, #2c3e50 100%);
-        padding: 0.8rem 1rem;
-        border-radius: 6px;
+    .stApp[data-theme="dark"] .metric-card {
+        background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+        border: 1px solid #4a5568;
         color: white;
-        margin: 1.5rem 0 1rem 0;
-        font-weight: 500;
-        font-size: 1.1rem;
-        border-left: 4px solid #3498db;
+    }
+    
+    .stApp[data-theme="dark"] .metric-value {
+        color: white !important;
+    }
+    
+    .stApp[data-theme="dark"] .metric-label {
+        color: rgba(255, 255, 255, 0.8) !important;
     }
 </style>
 """, unsafe_allow_html=True)
 
-# Professional header with company branding
-try:
-    import base64
-    with open("logo.png", "rb") as logo_file:
-        logo_base64 = base64.b64encode(logo_file.read()).decode()
-    
-    st.markdown(f"""
-    <div class="procurement-header">
-        <div style="display: flex; align-items: center; justify-content: center; margin-bottom: 1rem;">
-            <img src="data:image/png;base64,{logo_base64}" alt="Reflexta Data Intelligence" class="company-logo" style="height: 60px; margin-right: 25px; vertical-align: middle;">
-            <div style="text-align: left;">
-                <h1 style="margin: 0; font-size: 2.2rem; font-weight: 700; line-height: 1.2;">Procurement Dashboard</h1>
-                <p style="margin: 0.3rem 0 0 0; font-size: 1.1rem; opacity: 0.9; font-weight: 300;">Reflexta Data Intelligence</p>
-            </div>
-        </div>
-        <p style="margin: 0; text-align: center; font-size: 1rem; opacity: 0.9;">Comprehensive procurement analytics and vendor management</p>
-    </div>
-    """, unsafe_allow_html=True)
-except FileNotFoundError:
-    st.markdown("""
-    <div class="procurement-header">
-        <h1>Procurement Dashboard</h1>
-        <p style="margin: 0.5rem 0 0 0; font-size: 1rem; opacity: 0.9; font-weight: 300;">Reflexta Data Intelligence</p>
-        <p>Comprehensive procurement analytics and vendor management</p>
-    </div>
-    """, unsafe_allow_html=True)
-
-# Sidebar filters
-with st.sidebar:
-    # Company logo in sidebar
-    try:
-        with open("logo.png", "rb") as logo_file:
-            logo_base64 = base64.b64encode(logo_file.read()).decode()
-        
-        st.markdown(f"""
-        <div class="sidebar-logo">
-            <img src="data:image/png;base64,{logo_base64}" alt="Reflexta Data Intelligence" style="height: 40px; margin-bottom: 0.5rem;">
-            <h3>Reflexta Data Intelligence</h3>
-            <p>Procurement Analytics</p>
-        </div>
-        """, unsafe_allow_html=True)
-    except FileNotFoundError:
-        st.markdown("""
-        <div class="sidebar-logo">
-            <h3>Reflexta Data Intelligence</h3>
-            <p>Procurement Analytics</p>
-        </div>
-        """, unsafe_allow_html=True)
-    
-    st.markdown("### Procurement Filters")
-    st.markdown("---")
-    
-    today = dt.date.today()
-    default_from = today - dt.timedelta(days=90)
-    
-    st.markdown("**Date Range**")
-    from_dt = st.date_input("From Date", value=default_from, key="proc_from")
-    to_dt = st.date_input("To Date", value=today, key="proc_to")
-    
-    st.markdown("**Department**")
-    dept_options = ["All", "Finance", "Procurement", "IT", "HR", "Operations", "Marketing", "Sales", "Legal"]
-    selected_dept = st.selectbox("Select Department", dept_options, key="proc_dept")
-    
-    st.markdown("**Vendor**")
-    vendor_options = ["All", "TechCorp Solutions", "Office Supplies Inc", "Consulting Partners", 
-                     "Software Systems Ltd", "Logistics Pro", "Marketing Agency", "Legal Associates", 
-                     "HR Services Co", "Equipment Rentals", "Security Solutions"]
-    selected_vendor = st.selectbox("Select Vendor", vendor_options, key="proc_vendor")
-    
-    st.markdown("**Category**")
-    category_options = ["All", "Software", "Hardware", "Services", "Office Supplies", "Raw Materials",
-                       "Equipment", "Marketing", "Travel", "Training", "Maintenance"]
-    selected_category = st.selectbox("Select Category", category_options, key="proc_category")
-    
-    st.markdown("**Order Status**")
-    status_options = ["All", "Draft", "Submitted", "Approved", "Rejected", "Ordered", "Received", "Closed", "Cancelled"]
-    selected_status = st.selectbox("Order Status", status_options, key="proc_status")
-    
-    st.markdown("**Priority**")
-    priority_options = ["All", "Low", "Medium", "High", "Urgent"]
-    selected_priority = st.selectbox("Order Priority", priority_options, key="proc_priority")
-    
-    st.markdown("**Order Value Range**")
-    value_range = st.slider(
-        "Order Value Range ($)",
-        min_value=0,
-        max_value=200000,
-        value=(0, 200000),
-        step=5000,
-        key="proc_value_range"
-    )
-    
-    st.markdown("**Vendor Rating**")
-    rating_range = st.slider(
-        "Minimum Vendor Rating",
-        min_value=1.0,
-        max_value=5.0,
-        value=1.0,
-        step=0.1,
-        key="proc_rating"
-    )
-    
-    st.markdown("**Group By**")
-    group_by = st.selectbox("Trend Grouping", ["month", "quarter", "week"], key="proc_group")
-    
-    st.markdown("---")
-    st.markdown("### Quick Actions")
-    if st.button("Refresh Data", use_container_width=True, key="proc_refresh"):
-        st.rerun()
-    
-    if st.button("Export Report", use_container_width=True, key="proc_export"):
-        st.success("Procurement report export feature coming soon!")
-    
-    st.markdown("---")
-    st.markdown("### Procurement Info")
-    st.info("Analyze vendor performance, category spending, and delivery metrics.")
+# Header
+st.markdown("""
+<div class="procurement-header">
+    <h1>🛒 Procurement Dashboard</h1>
+    <p>Comprehensive Procurement Analytics & Vendor Performance</p>
+</div>
+""", unsafe_allow_html=True)
 
 if not health_check():
     st.error("Database connection failed. Please check your connection settings.")
     st.stop()
 
 try:
-    # Get department ID if specific department is selected
-    dept_id = None
-    if selected_dept != "All":
-        dept_mapping = {
-            "Finance": 1, "Procurement": 2, "IT": 3, "HR": 4, "Operations": 5,
-            "Marketing": 6, "Sales": 7, "Legal": 8
-        }
-        dept_id = dept_mapping.get(selected_dept)
-    
-    # Process other filters
-    vendor_id = None
-    if selected_vendor != "All":
-        vendor_mapping = {
-            "TechCorp Solutions": 1, "Office Supplies Inc": 2, "Consulting Partners": 3,
-            "Software Systems Ltd": 4, "Logistics Pro": 5, "Marketing Agency": 6,
-            "Legal Associates": 7, "HR Services Co": 8, "Equipment Rentals": 9, "Security Solutions": 10
-        }
-        vendor_id = vendor_mapping.get(selected_vendor)
-    
-    category_id = None
-    if selected_category != "All":
-        category_mapping = {
-            "Software": 1, "Hardware": 2, "Services": 3, "Office Supplies": 4, "Raw Materials": 5,
-            "Equipment": 6, "Marketing": 7, "Travel": 8, "Training": 9, "Maintenance": 10
-        }
-        category_id = category_mapping.get(selected_category)
-    
-    status = selected_status if selected_status != "All" else None
-    priority = selected_priority if selected_priority != "All" else None
-    min_value, max_value = value_range
-    min_rating = rating_range
-    
     # Procurement KPIs
     st.markdown('<div class="section-header">Key Procurement Metrics</div>', unsafe_allow_html=True)
     
-    kpis = get_procurement_kpis(from_dt, to_dt, dept_id)
+    kpis = get_procurement_kpis(from_date, to_date, dept_id)
     if not kpis.empty:
         row = kpis.iloc[0]
         
@@ -262,220 +238,137 @@ try:
         
         with col1:
             st.metric(
-                "Total Orders", 
-                f"{int(row['total_orders']) if row['total_orders'] is not None else 0:,}",
-                help="Total number of procurement orders"
+                label="Total Orders",
+                value=f"{row['total_orders']:,}" if row['total_orders'] else "0",
+                delta=f"{row['order_growth']:,}" if row['order_growth'] else None
             )
         
         with col2:
             st.metric(
-                "Total Value", 
-                f"${float(row['total_value']) if row['total_value'] is not None else 0:,.0f}",
-                help="Total value of all orders"
+                label="Total Spend",
+                value=f"${row['total_spend']:,.2f}" if row['total_spend'] else "$0.00",
+                delta=f"${row['spend_growth']:,.2f}" if row['spend_growth'] else None
             )
         
         with col3:
             st.metric(
-                "Unique Vendors", 
-                f"{int(row['unique_vendors']) if row['unique_vendors'] is not None else 0:,}",
-                help="Number of unique vendors used"
+                label="Average Order Value",
+                value=f"${row['avg_order_value']:,.2f}" if row['avg_order_value'] else "$0.00",
+                delta=f"${row['aov_growth']:,.2f}" if row['aov_growth'] else None
             )
         
         with col4:
             st.metric(
-                "Completed Orders", 
-                f"{int(row['completed_orders']) if row['completed_orders'] is not None else 0:,}",
-                help="Number of completed orders"
+                label="Active Vendors",
+                value=f"{row['active_vendors']:,}" if row['active_vendors'] else "0",
+                delta=f"{row['vendor_growth']:,}" if row['vendor_growth'] else None
             )
     else:
-        st.info("No procurement data available for the selected filters.")
+        st.warning("No procurement data available for the selected period.")
     
-    # Department Performance
-    st.markdown('<div class="section-header">Department Performance</div>', unsafe_allow_html=True)
+    # Vendor Performance Analysis
+    st.markdown('<div class="section-header">Vendor Performance Analysis</div>', unsafe_allow_html=True)
     
-    dept_data = get_procurement_summary(from_dt, to_dt, dept_id)
-    if not empty_state(dept_data):
-        col1, col2 = st.columns([2, 1])
-        
-        with col1:
-            st.markdown("#### Department Procurement Performance")
-            fig = department_procurement_chart(dept_data)
-            st.plotly_chart(fig, use_container_width=True)
-        
-        with col2:
-            st.markdown("#### Department Summary")
-            st.dataframe(
-                dept_data,
-                use_container_width=True,
-                hide_index=True,
-                column_config={
-                    "total_value": st.column_config.NumberColumn("Total Value ($)", format="$%.2f"),
-                    "avg_order_value": st.column_config.NumberColumn("Avg Order ($)", format="$%.2f"),
-                    "completion_rate": st.column_config.NumberColumn("Completion %", format="%.1f%%")
-                }
-            )
-    else:
-        st.info("No department data available for the selected filters.")
-    
-    # Vendor Performance
-    st.markdown('<div class="section-header">Vendor Performance</div>', unsafe_allow_html=True)
-    
-    vendor_data = get_vendor_performance(from_dt, to_dt)
+    vendor_data = get_vendor_performance(from_date, to_date, dept_id)
     if not empty_state(vendor_data):
-        col1, col2 = st.columns([2, 1])
-        
-        with col1:
-            st.markdown("#### Vendor Performance Analysis")
-            fig = vendor_performance_chart(vendor_data)
-            st.plotly_chart(fig, use_container_width=True)
-        
-        with col2:
-            st.markdown("#### Top Vendors")
-            top_vendors = vendor_data.head(10)
-            st.dataframe(
-                top_vendors,
-                use_container_width=True,
-                hide_index=True,
-                column_config={
-                    "total_value": st.column_config.NumberColumn("Total Value ($)", format="$%.2f"),
-                    "completion_rate": st.column_config.NumberColumn("Completion %", format="%.1f%%"),
-                    "rating": st.column_config.NumberColumn("Rating", format="%.1f")
-                }
-            )
+        st.plotly_chart(
+            vendor_performance_chart(vendor_data),
+            use_container_width=True
+        )
     else:
-        st.info("No vendor data available for the selected filters.")
-    
-    # Category Analysis
-    st.markdown('<div class="section-header">Category Analysis</div>', unsafe_allow_html=True)
-    
-    category_data = get_category_analysis(from_dt, to_dt)
-    if not empty_state(category_data):
-        col1, col2 = st.columns([1, 1])
-        
-        with col1:
-            st.markdown("#### Spending by Category")
-            fig = category_spending_pie(category_data)
-            st.plotly_chart(fig, use_container_width=True)
-        
-        with col2:
-            st.markdown("#### Category Performance")
-            st.dataframe(
-                category_data,
-                use_container_width=True,
-                hide_index=True,
-                column_config={
-                    "total_value": st.column_config.NumberColumn("Total Value ($)", format="$%.2f"),
-                    "avg_order_value": st.column_config.NumberColumn("Avg Order ($)", format="$%.2f"),
-                    "completion_rate": st.column_config.NumberColumn("Completion %", format="%.1f%%")
-                }
-            )
-    else:
-        st.info("No category data available for the selected filters.")
+        st.info("No vendor performance data available for the selected period.")
     
     # Procurement Trends
     st.markdown('<div class="section-header">Procurement Trends</div>', unsafe_allow_html=True)
     
-    trends_data = get_procurement_trends(from_dt, to_dt, group_by)
+    trends_data = get_procurement_trends(from_date, to_date, dept_id)
     if not empty_state(trends_data):
-        col1, col2 = st.columns([2, 1])
-        
-        with col1:
-            st.markdown(f"#### {group_by.title()} Procurement Trends")
-            fig = procurement_trends_chart(trends_data, group_by)
-            st.plotly_chart(fig, use_container_width=True)
-        
-        with col2:
-            st.markdown("#### Trend Summary")
-            st.dataframe(
-                trends_data,
-                use_container_width=True,
-                hide_index=True,
-                column_config={
-                    "total_value": st.column_config.NumberColumn("Total Value ($)", format="$%.2f"),
-                    "avg_order_value": st.column_config.NumberColumn("Avg Order ($)", format="$%.2f"),
-                    "completion_rate": st.column_config.NumberColumn("Completion %", format="%.1f%%")
-                }
-            )
+        st.plotly_chart(
+            procurement_trends_chart(trends_data),
+            use_container_width=True
+        )
     else:
-        st.info("No trend data available for the selected filters.")
+        st.info("No trend data available for the selected period.")
+    
+    # Category Analysis
+    st.markdown('<div class="section-header">Spending by Category</div>', unsafe_allow_html=True)
+    
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        st.markdown("#### Category Distribution")
+        category_data = get_category_analysis(from_date, to_date, dept_id)
+        if not empty_state(category_data):
+            st.plotly_chart(
+                category_spending_pie(category_data),
+                use_container_width=True
+            )
+        else:
+            st.info("No category data available.")
+    
+    with col2:
+        st.markdown("#### Department Procurement")
+        dept_data = get_spend_analysis(from_date, to_date, dept_id)
+        if not empty_state(dept_data):
+            st.plotly_chart(
+                department_procurement_chart(dept_data),
+                use_container_width=True
+            )
+        else:
+            st.info("No department data available.")
     
     # Delivery Performance
     st.markdown('<div class="section-header">Delivery Performance</div>', unsafe_allow_html=True)
     
-    delivery_data = get_delivery_performance(from_dt, to_dt)
+    delivery_data = get_delivery_performance(from_date, to_date, dept_id)
     if not empty_state(delivery_data):
-        col1, col2 = st.columns([2, 1])
-        
-        with col1:
-            st.markdown("#### Delivery Performance by Vendor")
-            fig = delivery_performance_chart(delivery_data)
-            st.plotly_chart(fig, use_container_width=True)
-        
-        with col2:
-            st.markdown("#### Delivery Metrics")
-            st.dataframe(
-                delivery_data,
-                use_container_width=True,
-                hide_index=True,
-                column_config={
-                    "on_time_percentage": st.column_config.NumberColumn("On Time %", format="%.1f%%"),
-                    "avg_delivery_delay_days": st.column_config.NumberColumn("Avg Delay (days)", format="%.1f")
-                }
+        st.plotly_chart(
+            delivery_performance_chart(delivery_data),
+            use_container_width=True
+        )
+    else:
+        st.info("No delivery performance data available for the selected period.")
+    
+    # Order Status Distribution
+    st.markdown('<div class="section-header">Order Status Analysis</div>', unsafe_allow_html=True)
+    
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        st.markdown("#### Order Status Distribution")
+        status_data = get_pending_orders(from_date, to_date, dept_id)
+        if not empty_state(status_data):
+            st.plotly_chart(
+                order_status_distribution(status_data),
+                use_container_width=True
             )
-    else:
-        st.info("No delivery data available for the selected filters.")
+        else:
+            st.info("No order status data available.")
     
-    # Pending Orders
-    st.markdown('<div class="section-header">Pending Orders</div>', unsafe_allow_html=True)
+    with col2:
+        st.markdown("#### Priority Analysis")
+        priority_data = get_pending_orders(from_date, to_date, dept_id)
+        if not empty_state(priority_data):
+            st.plotly_chart(
+                priority_analysis_chart(priority_data),
+                use_container_width=True
+            )
+        else:
+            st.info("No priority data available.")
     
-    pending_data = get_pending_orders()
-    if not empty_state(pending_data):
-        col1, col2 = st.columns([1, 1])
-        
-        with col1:
-            st.markdown("#### Order Status Distribution")
-            fig = order_status_distribution(pending_data)
-            st.plotly_chart(fig, use_container_width=True)
-        
-        with col2:
-            st.markdown("#### Priority Analysis")
-            fig = priority_analysis_chart(pending_data)
-            st.plotly_chart(fig, use_container_width=True)
-        
-        st.markdown("#### Pending Orders Details")
+    # Procurement Summary Table
+    st.markdown('<div class="section-header">Procurement Summary</div>', unsafe_allow_html=True)
+    
+    summary_data = get_procurement_summary(from_date, to_date, dept_id)
+    if not empty_state(summary_data):
         st.dataframe(
-            pending_data,
+            summary_data,
             use_container_width=True,
-            hide_index=True,
-            column_config={
-                "grand_total": st.column_config.NumberColumn("Total ($)", format="$%.2f"),
-                "order_date": "Order Date",
-                "expected_delivery_date": "Expected Delivery"
-            }
+            hide_index=True
         )
     else:
-        st.success("No pending orders!")
-    
-    # Detailed Spend Analysis
-    st.markdown('<div class="section-header">Detailed Spend Analysis</div>', unsafe_allow_html=True)
-    
-    spend_data = get_spend_analysis(from_dt, to_dt, dept_id)
-    if not empty_state(spend_data):
-        st.markdown("#### All Procurement Orders")
-        st.dataframe(
-            spend_data,
-            use_container_width=True,
-            hide_index=True,
-            column_config={
-                "grand_total": st.column_config.NumberColumn("Total ($)", format="$%.2f"),
-                "order_date": "Order Date",
-                "expected_delivery_date": "Expected Delivery",
-                "actual_delivery_date": "Actual Delivery"
-            }
-        )
-    else:
-        st.info("No spend data available for the selected filters.")
-        
-except Exception as exc:
-    st.error(f"Procurement Dashboard Error: Failed to load data: {exc}")
-    st.info("Please check your database connection and ensure the Procurement tables exist with the required columns.")
+        st.info("No summary data available for the selected period.")
+
+except Exception as e:
+    st.error(f"Error loading procurement data: {str(e)}")
+    st.info("Please check your database connection and try again.")
