@@ -64,7 +64,7 @@ def get_procurement_kpis(from_dt: date, to_dt: date, dept_id: Optional[int] = No
         COUNT(CASE WHEN status IN ('Draft', 'Submitted', 'Approved', 'Ordered') THEN 1 END) as pending_orders,
         COUNT(CASE WHEN priority = 'High' OR priority = 'Urgent' THEN 1 END) as high_priority_orders,
         AVG(CASE WHEN delivery_date IS NOT NULL 
-            THEN (delivery_date - order_date) END) as avg_delivery_delay_days
+            THEN EXTRACT(DAYS FROM (delivery_date - order_date)) END) as avg_delivery_delay_days
     FROM procurement_orders
     WHERE order_date BETWEEN :from_dt AND :to_dt
         {where_dept}
@@ -89,7 +89,7 @@ def get_vendor_performance(from_dt: date, to_dt: date) -> pd.DataFrame:
         COUNT(CASE WHEN po.status = 'Received' THEN 1 END) as completed_orders,
         COUNT(CASE WHEN po.status = 'Received' THEN 1 END) * 100.0 / NULLIF(COUNT(po.order_id), 0) as completion_rate,
         AVG(CASE WHEN po.delivery_date IS NOT NULL 
-            THEN (po.delivery_date - po.order_date) END) as avg_delivery_delay_days
+            THEN EXTRACT(DAYS FROM (po.delivery_date - po.order_date)) END) as avg_delivery_delay_days
     FROM procurement_vendors v
     LEFT JOIN procurement_orders po ON v.vendor_id = po.vendor_id
         AND po.order_date BETWEEN :from_dt AND :to_dt
@@ -176,7 +176,7 @@ def get_pending_orders() -> pd.DataFrame:
         c.category_name,
         d.dept_name,
         po.requested_by,
-        po.expected_delivery_date,
+        po.order_date + INTERVAL '30 days' as expected_delivery_date,
         po.notes
     FROM procurement_orders po
     JOIN procurement_vendors v ON po.vendor_id = v.vendor_id
@@ -209,7 +209,7 @@ def get_delivery_performance(from_dt: date, to_dt: date) -> pd.DataFrame:
         COUNT(CASE WHEN po.delivery_date <= po.order_date + INTERVAL '30 days' THEN 1 END) as on_time_deliveries,
         COUNT(CASE WHEN po.delivery_date > po.order_date + INTERVAL '30 days' THEN 1 END) as late_deliveries,
         AVG(CASE WHEN po.delivery_date IS NOT NULL 
-            THEN (po.delivery_date - po.order_date) END) as avg_delivery_delay_days,
+            THEN EXTRACT(DAYS FROM (po.delivery_date - po.order_date)) END) as avg_delivery_delay_days,
         COUNT(CASE WHEN po.delivery_date <= po.order_date + INTERVAL '30 days' THEN 1 END) * 100.0 / 
             NULLIF(COUNT(CASE WHEN po.delivery_date IS NOT NULL THEN 1 END), 0) as on_time_percentage
     FROM procurement_orders po
@@ -247,7 +247,7 @@ def get_spend_analysis(from_dt: date, to_dt: date, dept_id: Optional[int] = None
         cc.cost_center_name,
         po.requested_by,
         po.priority,
-        po.expected_delivery_date,
+        po.order_date + INTERVAL '30 days' as expected_delivery_date,
         po.delivery_date
     FROM procurement_orders po
     JOIN procurement_vendors v ON po.vendor_id = v.vendor_id
