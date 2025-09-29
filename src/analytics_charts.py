@@ -281,7 +281,28 @@ def budget_vs_actual_chart(df: pd.DataFrame) -> go.Figure:
     """Create budget vs actual analysis chart."""
     
     if df.empty:
-        return go.Figure()
+        # Return empty figure with proper title
+        fig = go.Figure()
+        fig.update_layout(
+            title="Budget vs Actual Analysis",
+            xaxis_title="Amount ($)",
+            yaxis_title="Budget",
+            height=400
+        )
+        return fig
+    
+    # Check if required columns exist
+    required_cols = ["budget_name", "budget_amount", "spent_amount"]
+    if not all(col in df.columns for col in required_cols):
+        # Return empty figure with proper title
+        fig = go.Figure()
+        fig.update_layout(
+            title="Budget vs Actual Analysis",
+            xaxis_title="Amount ($)",
+            yaxis_title="Budget",
+            height=400
+        )
+        return fig
     
     # Create horizontal bar chart
     fig = go.Figure()
@@ -292,7 +313,7 @@ def budget_vs_actual_chart(df: pd.DataFrame) -> go.Figure:
         x=df["budget_amount"],
         orientation='h',
         name='Budgeted Amount',
-        marker_color=PROFESSIONAL_COLORS[0],
+        marker_color='lightblue',
         text=df["budget_amount"],
         textposition='auto'
     ))
@@ -303,7 +324,7 @@ def budget_vs_actual_chart(df: pd.DataFrame) -> go.Figure:
         x=df["spent_amount"],
         orientation='h',
         name='Spent Amount',
-        marker_color=PROFESSIONAL_COLORS[3],
+        marker_color='red',
         text=df["spent_amount"],
         textposition='auto'
     ))

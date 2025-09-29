@@ -205,6 +205,19 @@ st.markdown("""
     .stApp[data-theme="dark"] .metric-label {
         color: rgba(255, 255, 255, 0.8) !important;
     }
+    
+    /* Fix excessive spacing and scrolling issues */
+    .stApp {
+        overflow-x: hidden;
+    }
+    
+    .stPlotlyChart {
+        max-height: 600px !important;
+    }
+    
+    .stDataFrame {
+        max-height: 400px !important;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -320,3 +333,12 @@ try:
 except Exception as e:
     st.error(f"Error loading analytics data: {str(e)}")
     st.info("Please check your database connection and try again.")
+
+# Footer to prevent excessive scrolling
+st.markdown("---")
+st.markdown("""
+<div style="text-align: center; padding: 2rem; color: #666;">
+    <p>📊 Analytics Dashboard - Reflexta Data Intelligence</p>
+    <p>Advanced Business Intelligence & Comprehensive Reporting</p>
+</div>
+""", unsafe_allow_html=True)
