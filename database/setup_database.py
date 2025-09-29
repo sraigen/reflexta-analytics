@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Database setup script for Finance and Procurement modules.
-Run this script to create all necessary tables, views, and sample data.
+Database setup script for Reflexta Analytics Platform.
+Creates all necessary tables, views, and sample data for Finance and Procurement modules.
 """
 
 import os
@@ -13,12 +13,7 @@ project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
 import pandas as pd
-import streamlit as st
 from sqlalchemy import create_engine, text
-from dotenv import load_dotenv
-
-# Load environment variables
-load_dotenv()
 
 def get_database_url():
     """Get database URL from environment or secrets."""

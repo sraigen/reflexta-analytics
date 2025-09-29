@@ -1,6 +1,15 @@
-# Enterprise Analytics Dashboard
+# 🚀 Reflexta Analytics Platform
 
-A comprehensive, production-grade data visualization platform built with Python, Streamlit, pandas, and PostgreSQL. Features advanced Finance and Procurement analytics with professional dashboards, executive insights, and interactive visualizations.
+A production-grade data visualization platform built with Python, Streamlit, and PostgreSQL. Features comprehensive Finance and Procurement analytics with luxury professional UI, executive insights, and interactive visualizations.
+
+## 🎯 Key Features
+
+- **💼 Enterprise-Grade**: Production-ready with professional luxury UI
+- **📊 Comprehensive Analytics**: Finance, Procurement, and Executive dashboards
+- **🎨 Luxury Design**: Sophisticated color palette and modern styling
+- **⚡ High Performance**: Optimized queries with intelligent caching
+- **🔒 Secure**: Parameterized queries and secure database connections
+- **📱 Responsive**: Works seamlessly across all devices
 
 ## 🚀 Features
 
@@ -154,31 +163,38 @@ url = "postgresql+psycopg://username:password@localhost:5432/database_name"
 
 ```
 data-viz-app/
-├── src/
-│   ├── db.py                    # Database connections
-│   ├── queries.py              # Legacy query functions
-│   ├── charts.py               # Legacy chart functions
-│   ├── ui.py                   # UI components
-│   ├── db_analysis.py          # Database analysis functions
-│   ├── finance_queries.py      # Finance-specific queries
-│   ├── procurement_queries.py  # Procurement-specific queries
-│   ├── finance_charts.py       # Finance chart functions
-│   ├── procurement_charts.py   # Procurement chart functions
-│   ├── analytics_queries.py    # Advanced analytics queries
-│   └── analytics_charts.py     # Advanced analytics charts
-├── pages/
-│   ├── 00_Database_Analysis.py
-│   ├── 03_Finance_Dashboard.py
-│   ├── 04_Procurement_Dashboard.py
-│   └── 05_Analytics_Dashboard.py
-├── database/
-│   └── schema.sql              # Complete database schema
-├── app.py                      # Main application
-├── populate_sample_data.py     # Sample data population
-├── requirements.txt            # Dependencies
-├── Dockerfile                  # Docker configuration
-├── docker-compose.yml          # Docker Compose setup
-└── README.md
+├── app.py                          # Main application entry point
+├── pages/                          # Dashboard pages
+│   ├── 00_Database_Analysis.py    # Database exploration
+│   ├── 03_Finance_Dashboard.py     # Finance analytics
+│   ├── 04_Procurement_Dashboard.py # Procurement analytics
+│   └── 05_Analytics_Dashboard.py   # Executive analytics
+├── src/                            # Core application code
+│   ├── __init__.py                 # Package initialization
+│   ├── db.py                       # Database connection management
+│   ├── ui.py                       # Reusable UI components
+│   ├── finance_queries.py          # Finance data queries
+│   ├── finance_charts.py           # Finance visualizations
+│   ├── procurement_queries.py      # Procurement data queries
+│   ├── procurement_charts.py        # Procurement visualizations
+│   ├── analytics_queries.py        # Analytics data queries
+│   └── analytics_charts.py         # Analytics visualizations
+├── database/                       # Database related files
+│   ├── schema.sql                  # Database schema
+│   └── setup_database.py          # Database setup script
+├── .streamlit/                     # Streamlit configuration
+│   ├── config.toml                 # Streamlit theme config
+│   └── secrets.toml                # Database credentials
+├── requirements.txt                # Python dependencies
+├── pyproject.toml                  # Linting configuration
+├── populate_sample_data.py         # Sample data population
+├── README.md                       # Project documentation
+├── DEVELOPER_GUIDE.md             # Developer documentation
+├── EXTENSION_GUIDE.md             # Extension guide for users
+├── QUICK_REFERENCE.md              # Quick reference for developers
+├── Dockerfile                      # Docker configuration
+├── docker-compose.yml              # Docker Compose setup
+└── logo.png                        # Company logo
 ```
 
 ## 🔧 Development
