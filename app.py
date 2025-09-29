@@ -931,8 +931,8 @@ try:
     </div>
     """, unsafe_allow_html=True)
 
-# Render popup AI chat
-render_popup_chat()
+    # Render popup AI chat
+    render_popup_chat()
         
 except Exception as exc:  # noqa: BLE001
     st.error(f"Database Error: Failed to load data: {exc}")
