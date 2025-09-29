@@ -1,131 +1,430 @@
 from __future__ import annotations
 
 import streamlit as st
-from src.db_analysis import analyze_database, get_table_info, get_table_sample
-from src.db import health_check
+import pandas as pd
+import plotly.express as px
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
+import datetime as dt
+from typing import Optional, Any
+
+# Import database and query functions
+from src.db import get_conn, health_check
+from src.ui import empty_state
 
 st.set_page_config(page_title="Database Analysis", layout="wide")
 
-# Professional header with company branding
-try:
-    import base64
-    with open("logo.png", "rb") as logo_file:
-        logo_base64 = base64.b64encode(logo_file.read()).decode()
+# Professional CSS for Database Analysis
+st.markdown("""
+<style>
+    .db-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 3rem 2rem;
+        border-radius: 15px;
+        margin-bottom: 2rem;
+        text-align: center;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    }
     
-    st.markdown(f"""
-    <div class="main-header">
-        <div style="display: flex; align-items: center; justify-content: center; margin-bottom: 1rem;">
-            <img src="data:image/png;base64,{logo_base64}" alt="Reflexta Data Intelligence" class="company-logo" style="height: 60px; margin-right: 25px; vertical-align: middle;">
-            <div style="text-align: left;">
-                <h1 style="margin: 0; font-size: 2.2rem; font-weight: 700; line-height: 1.2;">Database Analysis</h1>
-                <p style="margin: 0.3rem 0 0 0; font-size: 1.1rem; opacity: 0.9; font-weight: 300;">Reflexta Data Intelligence</p>
-            </div>
-        </div>
-        <p style="margin: 0; text-align: center; font-size: 1rem; opacity: 0.9;">Explore your database structure and data</p>
-    </div>
-    """, unsafe_allow_html=True)
-except FileNotFoundError:
-    st.markdown("""
-    <div class="main-header">
-        <h1>Database Analysis</h1>
-        <p style="margin: 0.5rem 0 0 0; font-size: 1rem; opacity: 0.9; font-weight: 300;">Reflexta Data Intelligence</p>
-        <p>Explore your database structure and data</p>
-    </div>
-    """, unsafe_allow_html=True)
+    .db-header h1 {
+        margin: 0;
+        font-size: 3rem;
+        font-weight: 800;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+    }
+    
+    .db-header p {
+        margin: 1rem 0 0 0;
+        font-size: 1.3rem;
+        opacity: 0.9;
+        font-weight: 300;
+    }
+    
+    .section-header {
+        background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 1.2rem 2rem;
+        border-radius: 10px;
+        margin: 2rem 0 1.5rem 0;
+        font-size: 1.4rem;
+        font-weight: 600;
+        text-align: center;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+    
+    .metric-card {
+        background: white;
+        padding: 2rem;
+        border-radius: 15px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        border-left: 5px solid #667eea;
+        margin-bottom: 1.5rem;
+        transition: transform 0.3s ease;
+    }
+    
+    .metric-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    }
+    
+    .metric-value {
+        font-size: 2.5rem;
+        font-weight: 800;
+        color: #2c3e50;
+        margin: 0;
+        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+    }
+    
+    .metric-label {
+        font-size: 1rem;
+        color: #7f8c8d;
+        margin: 0.5rem 0 0 0;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        font-weight: 600;
+    }
+    
+    .status-connected {
+        background: linear-gradient(90deg, #27ae60 0%, #2ecc71 100%);
+        color: white;
+        padding: 1rem 2rem;
+        border-radius: 10px;
+        text-align: center;
+        font-weight: 600;
+        font-size: 1.1rem;
+        box-shadow: 0 4px 15px rgba(39, 174, 96, 0.3);
+    }
+    
+    .status-disconnected {
+        background: linear-gradient(90deg, #e74c3c 0%, #c0392b 100%);
+        color: white;
+        padding: 1rem 2rem;
+        border-radius: 10px;
+        text-align: center;
+        font-weight: 600;
+        font-size: 1.1rem;
+        box-shadow: 0 4px 15px rgba(231, 76, 60, 0.3);
+    }
+    
+    .table-card {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        margin-bottom: 1rem;
+        border-left: 4px solid #667eea;
+    }
+    
+    .table-name {
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: #2c3e50;
+        margin: 0 0 0.5rem 0;
+    }
+    
+    .table-stats {
+        font-size: 0.9rem;
+        color: #7f8c8d;
+        margin: 0;
+    }
+    
+    .analysis-section {
+        background: #f8f9fa;
+        padding: 2rem;
+        border-radius: 10px;
+        margin: 1rem 0;
+        border: 1px solid #e9ecef;
+    }
+    
+    .data-preview {
+        background: white;
+        border-radius: 8px;
+        padding: 1rem;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        margin: 1rem 0;
+    }
+</style>
+""", unsafe_allow_html=True)
 
-# Sidebar with company logo
-with st.sidebar:
-    # Company logo in sidebar
-    try:
-        with open("logo.png", "rb") as logo_file:
-            logo_base64 = base64.b64encode(logo_file.read()).decode()
-        
-        st.markdown(f"""
-        <div class="sidebar-logo">
-            <img src="data:image/png;base64,{logo_base64}" alt="Reflexta Data Intelligence" style="height: 40px; margin-bottom: 0.5rem;">
-            <h3>Reflexta Data Intelligence</h3>
-            <p>Database Analysis</p>
-        </div>
-        """, unsafe_allow_html=True)
-    except FileNotFoundError:
-        st.markdown("""
-        <div class="sidebar-logo">
-            <h3>Reflexta Data Intelligence</h3>
-            <p>Database Analysis</p>
-        </div>
-        """, unsafe_allow_html=True)
+# Header
+st.markdown("""
+<div class="db-header">
+    <h1>🗄️ Database Analysis</h1>
+    <p>Comprehensive Database Structure & Data Insights</p>
+</div>
+""", unsafe_allow_html=True)
 
+# Check database connection
 if not health_check():
-    st.error("❌ Database connection failed. Please check your connection settings.")
+    st.markdown("""
+    <div class="status-disconnected">
+        ❌ Database Connection Failed
+    </div>
+    """, unsafe_allow_html=True)
+    st.error("Database connection failed. Please check your connection settings.")
     st.stop()
+else:
+    st.markdown("""
+    <div class="status-connected">
+        ✅ Database Connected Successfully
+    </div>
+    """, unsafe_allow_html=True)
 
-# Analyze database
-with st.spinner("Analyzing database structure..."):
-    analysis = analyze_database()
-
-if "error" in analysis:
-    st.error(f"❌ Analysis failed: {analysis['error']}")
-    st.stop()
-
-# Database Overview
-st.markdown('<div class="section-header">📊 Database Overview</div>', unsafe_allow_html=True)
-
-col1, col2, col3, col4 = st.columns(4)
-with col1:
-    st.metric("Tables", analysis["table_count"])
-with col2:
-    st.metric("Views", analysis["view_count"])
-with col3:
-    st.metric("Total Objects", analysis["table_count"] + analysis["view_count"])
-with col4:
-    st.metric("Status", "✅ Connected")
-
-# Tables Section
-st.markdown('<div class="section-header">📋 Tables</div>', unsafe_allow_html=True)
-
-if not analysis["tables"].empty:
-    st.dataframe(analysis["tables"], use_container_width=True, hide_index=True)
+try:
+    conn = get_conn()
     
-    # Table details
-    selected_table = st.selectbox("Select a table to analyze:", analysis["tables"]["tablename"].tolist())
+    # Database Overview
+    st.markdown('<div class="section-header">📊 Database Overview</div>', unsafe_allow_html=True)
     
-    if selected_table:
-        st.markdown(f"#### 📊 Analyzing: {selected_table}")
-        
-        col1, col2 = st.columns(2)
+    # Get database statistics
+    overview_query = """
+    SELECT 
+        schemaname,
+        tablename,
+        tableowner,
+        hasindexes,
+        hasrules,
+        hastriggers
+    FROM pg_tables 
+    WHERE schemaname = 'public'
+    ORDER BY tablename
+    """
+    
+    tables_df = conn.query(overview_query)
+    
+    if not tables_df.empty:
+        # Create overview metrics
+        col1, col2, col3, col4 = st.columns(4)
         
         with col1:
-            # Table info
-            info = get_table_info(selected_table)
-            if "error" not in info:
-                st.metric("Row Count", f"{info['row_count']:,}")
-                st.dataframe(info["columns"], use_container_width=True, hide_index=True)
+            st.markdown(f"""
+            <div class="metric-card">
+                <div class="metric-value">{len(tables_df)}</div>
+                <div class="metric-label">Total Tables</div>
+            </div>
+            """, unsafe_allow_html=True)
         
         with col2:
-            # Sample data
-            st.markdown("**Sample Data:**")
-            sample = get_table_sample(selected_table, 10)
-            if not sample.empty:
-                st.dataframe(sample, use_container_width=True, hide_index=True)
-            else:
-                st.info("No data available or table is empty")
-else:
-    st.info("No tables found in the database.")
+            # Count tables with indexes
+            indexed_tables = len(tables_df[tables_df['hasindexes'] == True])
+            st.markdown(f"""
+            <div class="metric-card">
+                <div class="metric-value">{indexed_tables}</div>
+                <div class="metric-label">Indexed Tables</div>
+            </div>
+            """, unsafe_allow_html=True)
+        
+        with col3:
+            # Count tables with triggers
+            triggered_tables = len(tables_df[tables_df['hastriggers'] == True])
+            st.markdown(f"""
+            <div class="metric-card">
+                <div class="metric-value">{triggered_tables}</div>
+                <div class="metric-label">Tables with Triggers</div>
+            </div>
+            """, unsafe_allow_html=True)
+        
+        with col4:
+            # Count tables with rules
+            ruled_tables = len(tables_df[tables_df['hasrules'] == True])
+            st.markdown(f"""
+            <div class="metric-card">
+                <div class="metric-value">{ruled_tables}</div>
+                <div class="metric-label">Tables with Rules</div>
+            </div>
+            """, unsafe_allow_html=True)
+    
+    # Tables List
+    st.markdown('<div class="section-header">📋 Database Tables</div>', unsafe_allow_html=True)
+    
+    if not tables_df.empty:
+        # Display tables in a more organized way
+        for _, table in tables_df.iterrows():
+            table_name = table['tablename']
+            
+            # Get row count for each table
+            try:
+                count_query = f"SELECT COUNT(*) as row_count FROM {table_name}"
+                count_result = conn.query(count_query)
+                row_count = count_result.iloc[0]['row_count'] if not count_result.empty else 0
+            except:
+                row_count = 0
+            
+            # Get column count
+            try:
+                column_query = f"""
+                SELECT COUNT(*) as column_count 
+                FROM information_schema.columns 
+                WHERE table_name = '{table_name}' AND table_schema = 'public'
+                """
+                column_result = conn.query(column_query)
+                column_count = column_result.iloc[0]['column_count'] if not column_result.empty else 0
+            except:
+                column_count = 0
+            
+            st.markdown(f"""
+            <div class="table-card">
+                <div class="table-name">{table_name}</div>
+                <div class="table-stats">
+                    📊 {row_count:,} rows • 📝 {column_count} columns • 
+                    {'🔍 Indexed' if table['hasindexes'] else '❌ No Index'} • 
+                    {'⚡ Triggered' if table['hastriggers'] else '❌ No Trigger'}
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+    
+    # Table Analysis Section
+    st.markdown('<div class="section-header">🔍 Detailed Table Analysis</div>', unsafe_allow_html=True)
+    
+    # Table selection
+    if not tables_df.empty:
+        table_names = tables_df['tablename'].tolist()
+        selected_table = st.selectbox(
+            "Select a table to analyze:",
+            options=table_names,
+            help="Choose a table to view detailed analysis"
+        )
+        
+        if selected_table:
+            st.markdown(f"""
+            <div class="analysis-section">
+                <h3>📊 Analyzing: {selected_table}</h3>
+            </div>
+            """, unsafe_allow_html=True)
+            
+            # Get table structure
+            structure_query = f"""
+            SELECT 
+                column_name,
+                data_type,
+                is_nullable,
+                column_default,
+                character_maximum_length
+            FROM information_schema.columns 
+            WHERE table_name = '{selected_table}' AND table_schema = 'public'
+            ORDER BY ordinal_position
+            """
+            
+            structure_df = conn.query(structure_query)
+            
+            if not structure_df.empty:
+                st.markdown("#### 📝 Table Structure")
+                st.dataframe(
+                    structure_df,
+                    hide_index=True,
+                    column_config={
+                        "column_name": "Column Name",
+                        "data_type": "Data Type",
+                        "is_nullable": "Nullable",
+                        "column_default": "Default Value",
+                        "character_maximum_length": "Max Length"
+                    }
+                )
+            
+            # Get sample data
+            try:
+                sample_query = f"SELECT * FROM {selected_table} LIMIT 10"
+                sample_df = conn.query(sample_query)
+                
+                if not sample_df.empty:
+                    st.markdown("#### 📋 Sample Data (First 10 rows)")
+                    st.dataframe(sample_df, hide_index=True)
+                else:
+                    st.info("No data available in this table.")
+            except Exception as e:
+                st.warning(f"Could not retrieve sample data: {str(e)}")
+            
+            # Get table statistics
+            try:
+                stats_query = f"""
+                SELECT 
+                    COUNT(*) as total_rows,
+                    COUNT(DISTINCT *) as unique_rows
+                FROM {selected_table}
+                """
+                stats_df = conn.query(stats_query)
+                
+                if not stats_df.empty:
+                    stats_row = stats_df.iloc[0]
+                    
+                    col1, col2, col3 = st.columns(3)
+                    
+                    with col1:
+                        st.metric("Total Rows", f"{stats_row['total_rows']:,}")
+                    
+                    with col2:
+                        st.metric("Unique Rows", f"{stats_row['unique_rows']:,}")
+                    
+                    with col3:
+                        if stats_row['total_rows'] > 0:
+                            uniqueness = (stats_row['unique_rows'] / stats_row['total_rows']) * 100
+                            st.metric("Data Uniqueness", f"{uniqueness:.1f}%")
+                        else:
+                            st.metric("Data Uniqueness", "N/A")
+            except Exception as e:
+                st.warning(f"Could not retrieve table statistics: {str(e)}")
+    
+    # Database Health Check
+    st.markdown('<div class="section-header">🏥 Database Health Check</div>', unsafe_allow_html=True)
+    
+    try:
+        # Check for foreign key constraints
+        fk_query = """
+        SELECT 
+            tc.table_name,
+            kcu.column_name,
+            ccu.table_name AS foreign_table_name,
+            ccu.column_name AS foreign_column_name
+        FROM information_schema.table_constraints AS tc 
+        JOIN information_schema.key_column_usage AS kcu
+            ON tc.constraint_name = kcu.constraint_name
+            AND tc.table_schema = kcu.table_schema
+        JOIN information_schema.constraint_column_usage AS ccu
+            ON ccu.constraint_name = tc.constraint_name
+            AND ccu.table_schema = tc.table_schema
+        WHERE tc.constraint_type = 'FOREIGN KEY'
+        """
+        
+        fk_df = conn.query(fk_query)
+        
+        if not fk_df.empty:
+            st.success(f"✅ Found {len(fk_df)} foreign key relationships")
+            st.dataframe(fk_df, hide_index=True)
+        else:
+            st.warning("⚠️ No foreign key relationships found")
+        
+        # Check for indexes
+        index_query = """
+        SELECT 
+            schemaname,
+            tablename,
+            indexname,
+            indexdef
+        FROM pg_indexes 
+        WHERE schemaname = 'public'
+        ORDER BY tablename, indexname
+        """
+        
+        index_df = conn.query(index_query)
+        
+        if not index_df.empty:
+            st.success(f"✅ Found {len(index_df)} indexes")
+        else:
+            st.warning("⚠️ No indexes found")
+            
+    except Exception as e:
+        st.error(f"Error during health check: {str(e)}")
 
-# Views Section
-st.markdown('<div class="section-header">👁️ Views</div>', unsafe_allow_html=True)
+except Exception as e:
+    st.error(f"Error loading database analysis: {str(e)}")
+    st.info("Please check your database connection and try again.")
 
-if not analysis["views"].empty:
-    st.dataframe(analysis["views"], use_container_width=True, hide_index=True)
-else:
-    st.info("No views found in the database.")
-
-# Recommendations
-st.markdown('<div class="section-header">💡 Recommendations</div>', unsafe_allow_html=True)
-
-if analysis["table_count"] == 0:
-    st.warning("⚠️ No tables found. Consider creating sample data or importing your existing data.")
-    st.info("💡 **Next Steps:**\n1. Create Finance and Procurement tables\n2. Import sample data\n3. Set up views for analytics")
-else:
-    st.success("✅ Database structure detected. Ready for dashboard development!")
-    st.info("💡 **Available for Dashboard Development:**\n1. Finance module dashboards\n2. Procurement analytics\n3. Cross-module insights")
+# Footer
+st.markdown("---")
+st.markdown("""
+<div style="text-align: center; padding: 2rem; color: #666;">
+    <p>🗄️ Database Analysis - Reflexta Data Intelligence</p>
+    <p>Comprehensive Database Structure & Data Insights</p>
+</div>
+""", unsafe_allow_html=True)
