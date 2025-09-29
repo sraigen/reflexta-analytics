@@ -7,8 +7,9 @@
 4. [Adding New KPIs](#adding-new-kpis)
 5. [Building New Reports](#building-new-reports)
 6. [Adding New Modules](#adding-new-modules)
-7. [Best Practices](#best-practices)
-8. [Troubleshooting](#troubleshooting)
+7. [🆕 Interactive Drill-Down Features](#interactive-drill-down-features)
+8. [Best Practices](#best-practices)
+9. [Troubleshooting](#troubleshooting)
 
 ---
 
@@ -758,6 +759,156 @@ st.info("Navigate to specific dashboards for detailed analytics and filtering op
 if st.button("🎯 Your Module Dashboard", use_container_width=True):
     st.switch_page("pages/06_YourModule_Dashboard.py")
 ```
+
+---
+
+## 🆕 Interactive Drill-Down Features
+
+### Overview
+The platform now includes advanced interactive drill-down capabilities that allow users to click on chart elements to see detailed breakdowns. This section explains how to implement and extend these features.
+
+### Key Drill-Down Types
+
+#### 1. Department Analysis Drill-Down
+```python
+# Example: Department spending with drill-down
+def create_department_drill_down(data: pd.DataFrame) -> None:
+    # Prepare department data
+    dept_data = data.groupby('department')['amount'].sum().reset_index()
+    
+    # Create interactive chart
+    fig = px.bar(dept_data, x='department', y='amount')
+    
+    # Add click functionality
+    fig.update_layout(
+        hovermode='closest',
+        clickmode='event+select',
+        height=500
+    )
+    
+    # Display chart
+    st.plotly_chart(fig, use_container_width=True, key="dept_chart")
+    
+    # Handle drill-down
+    if st.session_state.get('dept_chart_click'):
+        # Process click and show detailed breakdown
+        handle_department_drill_down(clicked_data)
+```
+
+#### 2. Monthly Trends Drill-Down
+```python
+# Example: Monthly trends with daily breakdown
+def create_monthly_drill_down(data: pd.DataFrame) -> None:
+    # Prepare monthly data
+    monthly_data = data.groupby('month')['amount'].sum().reset_index()
+    
+    # Create interactive line chart
+    fig = px.line(monthly_data, x='month', y='amount', markers=True)
+    
+    # Add click functionality
+    fig.update_layout(
+        hovermode='closest',
+        clickmode='event+select',
+        height=500
+    )
+    
+    # Display chart
+    st.plotly_chart(fig, use_container_width=True, key="monthly_chart")
+    
+    # Handle drill-down
+    if st.session_state.get('monthly_chart_click'):
+        # Process click and show daily breakdown
+        handle_monthly_drill_down(clicked_data)
+```
+
+#### 3. Category Breakdown Drill-Down
+```python
+# Example: Category breakdown with detailed items
+def create_category_drill_down(data: pd.DataFrame) -> None:
+    # Prepare category data
+    category_data = data.groupby('category')['amount'].sum().reset_index()
+    
+    # Create interactive pie chart
+    fig = px.pie(category_data, values='amount', names='category')
+    
+    # Add click functionality
+    fig.update_layout(
+        hovermode='closest',
+        clickmode='event+select',
+        height=500
+    )
+    
+    # Display chart
+    st.plotly_chart(fig, use_container_width=True, key="category_chart")
+    
+    # Handle drill-down
+    if st.session_state.get('category_chart_click'):
+        # Process click and show detailed items
+        handle_category_drill_down(clicked_data)
+```
+
+### Implementation Guidelines
+
+#### Chart Configuration
+```python
+# Essential configuration for interactive charts
+fig.update_layout(
+    hovermode='closest',        # Show closest point on hover
+    clickmode='event+select',   # Enable click events
+    height=500,                 # Professional height
+    showlegend=False            # Clean appearance
+)
+
+# Add hover effects
+fig.update_traces(
+    hovertemplate="<b>%{x}</b><br>Total: $%{y:,.0f}<br><extra></extra>",
+    customdata=data['department'].tolist()
+)
+```
+
+#### Click Event Handling
+```python
+# Handle click events in your dashboard
+if st.session_state.get('chart_click'):
+    clicked_data = st.session_state['chart_click']
+    if clicked_data and 'points' in clicked_data:
+        point = clicked_data['points'][0]
+        selected_value = point.get('x', point.get('label', ''))
+        selected_amount = point.get('y', 0)
+        
+        # Process the drill-down
+        process_drill_down(selected_value, selected_amount)
+```
+
+#### Data Filtering
+```python
+# Filter data based on user selection
+def filter_data_by_selection(data: pd.DataFrame, selection: str, filter_type: str) -> pd.DataFrame:
+    if filter_type == 'department':
+        return data[data['department'] == selection]
+    elif filter_type == 'month':
+        return data[data['month'] == selection]
+    elif filter_type == 'category':
+        return data[data['category'] == selection]
+    
+    return data
+```
+
+### Best Practices for Drill-Down
+
+1. **Clear Visual Cues**: Use colors and animations to indicate clickable elements
+2. **Consistent Behavior**: All drill-down features should work similarly
+3. **Easy Navigation**: Provide "Back" buttons and clear hierarchy
+4. **Performance**: Cache drill-down data to improve performance
+5. **Error Handling**: Handle cases where no data is available
+
+### Adding New Drill-Down Types
+
+1. **Create the Chart**: Use Plotly Express or Graph Objects
+2. **Add Click Configuration**: Set `clickmode='event+select'`
+3. **Handle Click Events**: Process `st.session_state` for click data
+4. **Filter Data**: Use the clicked value to filter your dataset
+5. **Display Results**: Show detailed breakdown or related charts
 
 ---
 

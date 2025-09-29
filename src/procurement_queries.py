@@ -74,7 +74,7 @@ def get_procurement_transactions(from_dt: date, to_dt: date, dept_id: Optional[i
         o.vendor_name,
         d.dept_name as department,
         COALESCE(d.sub_dept_name, 'General') as sub_department
-    FROM orders o
+    FROM procurement_orders o
     LEFT JOIN departments d ON o.dept_id = d.dept_id
     WHERE o.order_date BETWEEN :from_dt AND :to_dt
     {where_dept}

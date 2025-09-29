@@ -108,7 +108,7 @@ def get_finance_transactions(from_dt: date, to_dt: date, dept_id: Optional[int] 
         t.status,
         d.dept_name as department,
         COALESCE(d.sub_dept_name, 'General') as sub_department
-    FROM transactions t
+    FROM finance_transactions t
     LEFT JOIN departments d ON t.dept_id = d.dept_id
     WHERE t.transaction_date BETWEEN :from_dt AND :to_dt
     {where_dept}
