@@ -102,10 +102,16 @@ def get_procurement_kpis(from_dt: date, to_dt: date, dept_id: Optional[int] = No
 
 
 @st.cache_data(ttl=60, show_spinner=False)
-def get_vendor_performance(from_dt: date, to_dt: date) -> pd.DataFrame:
+def get_vendor_performance(from_dt: date, to_dt: date, dept_id: Optional[int] = None) -> pd.DataFrame:
     """Get vendor performance analysis."""
     
-    sql = """
+    params = {"from_dt": from_dt, "to_dt": to_dt}
+    where_dept = ""
+    if dept_id:
+        where_dept = " AND po.dept_id = :dept_id"
+        params["dept_id"] = dept_id
+    
+    sql = f"""
     SELECT 
         v.vendor_name,
         v.vendor_code,
@@ -119,12 +125,13 @@ def get_vendor_performance(from_dt: date, to_dt: date) -> pd.DataFrame:
     FROM procurement_vendors v
     LEFT JOIN procurement_orders po ON v.vendor_id = po.vendor_id
         AND po.order_date BETWEEN :from_dt AND :to_dt
+        {where_dept}
     GROUP BY v.vendor_id, v.vendor_name, v.vendor_code, v.rating
     ORDER BY total_value DESC
     """
     
     conn = get_conn()
-    return conn.query(sql, params={"from_dt": from_dt, "to_dt": to_dt})
+    return conn.query(sql, params=params)
 
 
 @st.cache_data(ttl=60, show_spinner=False)

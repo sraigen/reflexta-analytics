@@ -76,7 +76,7 @@ def get_executive_summary(from_dt: dt.date, to_dt: dt.date, dept_id: Any = None)
     """
     
     conn = get_conn()
-    return conn.query(sql)
+    return conn.query(sql, params=params)
 
 
 @st.cache_data(ttl=60, show_spinner=False)

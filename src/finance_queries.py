@@ -59,7 +59,8 @@ def get_finance_monthly_trends(from_dt: date, to_dt: date, transaction_type: Opt
     sql = f"""
     SELECT 
         EXTRACT(YEAR FROM transaction_date) as year,
-        EXTRACT(MONTH FROM transaction_date) as month,
+        EXTRACT(MONTH FROM transaction_date) as month_num,
+        TO_CHAR(transaction_date, 'Mon') as month,
         transaction_type,
         SUM(amount) as total_amount,
         COUNT(*) as transaction_count,
@@ -68,8 +69,8 @@ def get_finance_monthly_trends(from_dt: date, to_dt: date, transaction_type: Opt
     WHERE transaction_date BETWEEN :from_dt AND :to_dt
         AND status = 'Completed'
         {where_type}
-    GROUP BY EXTRACT(YEAR FROM transaction_date), EXTRACT(MONTH FROM transaction_date), transaction_type
-    ORDER BY year, month, transaction_type
+    GROUP BY EXTRACT(YEAR FROM transaction_date), EXTRACT(MONTH FROM transaction_date), TO_CHAR(transaction_date, 'Mon'), transaction_type
+    ORDER BY year, month_num, transaction_type
     """
     
     conn = get_conn()

@@ -659,7 +659,7 @@ try:
         st.markdown("#### Procurement Metrics")
         # Handle None values safely
         total_orders = int(row["total_orders"]) if row["total_orders"] is not None else 0
-        total_value = float(row["total_value"]) if row["total_value"] is not None else 0.0
+        total_value = float(row["total_spend"]) if row["total_spend"] is not None else 0.0
         avg_order_value = float(row["avg_order_value"]) if row["avg_order_value"] is not None else 0.0
         kpi_row(total_orders, total_value, avg_order_value)
 
@@ -700,7 +700,7 @@ try:
                     "dept_name": "Department",
                     "dept_code": "Code",
                     "total_orders": "Orders",
-                    "total_value": st.column_config.NumberColumn("Total Value ($)", format="$%.2f"),
+                    "total_spend": st.column_config.NumberColumn("Total Value ($)", format="$%.2f"),
                     "avg_order_value": st.column_config.NumberColumn("Avg Order ($)", format="$%.2f"),
                     "completion_rate": st.column_config.NumberColumn("Completion %", format="%.1f%%")
                 }
