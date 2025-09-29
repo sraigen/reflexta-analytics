@@ -9,6 +9,7 @@ from src.db import health_check
 from src.finance_queries import get_finance_kpis, get_finance_summary
 from src.procurement_queries import get_procurement_kpis, get_procurement_summary
 from src.ui import kpi_row, section_header, empty_state
+from src.chat_ui import render_chat_interface, render_quick_help
 
 # Luxury Professional CSS for Enterprise UI
 st.markdown("""
@@ -789,6 +790,19 @@ with st.sidebar:
     # Current time
     current_time = dt.datetime.now().strftime("%H:%M:%S")
     st.info(f"🕐 Last Updated: {current_time}")
+    
+    # AI Assistant Section
+    st.markdown("""
+    <div class="sidebar-section">
+        <h3>🤖 AI Assistant</h3>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # Render AI chat interface
+    render_chat_interface()
+    
+    # Quick help section
+    render_quick_help()
 
 if not health_check():
     st.error("Database connection failed. Please check your connection settings.")

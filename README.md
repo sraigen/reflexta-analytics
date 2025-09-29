@@ -25,6 +25,7 @@ A production-grade data visualization platform built with Python, Streamlit, and
 - **⚡ Real-time Data**: Live database connections with intelligent caching
 - **📊 Interactive Charts**: Plotly-powered visualizations with professional styling
 - **🔍 Advanced Analytics**: Executive summaries, performance heatmaps, trend analysis
+- **🤖 AI Assistant**: Intelligent chatbot powered by DeepSeek API for dashboard help
 - **📱 Responsive Design**: Works seamlessly on desktop, tablet, and mobile
 
 ## 🏗️ Architecture
@@ -71,10 +72,10 @@ A production-grade data visualization platform built with Python, Streamlit, and
    pip install -r requirements.txt
    ```
 
-4. **Configure database connection**
+4. **Configure database connection and AI assistant**
    ```bash
-   cp .streamlit/secrets.toml.example .streamlit/secrets.toml
-   # Edit .streamlit/secrets.toml with your database credentials
+   cp .streamlit/secrets_template.toml .streamlit/secrets.toml
+   # Edit .streamlit/secrets.toml with your database credentials and DeepSeek API key
    ```
 
 5. **Set up database schema and sample data**
