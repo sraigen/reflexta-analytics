@@ -388,6 +388,6 @@ except Exception as e:
     st.error(f"Error loading procurement data: {str(e)}")
     st.info("Please check your database connection and try again.")
 
-# Render floating AI chat
-from src.floating_ai_chat import render_floating_ai_chat
-render_floating_ai_chat()
+# Render simple AI chat
+from src.simple_ai_chat import render_simple_ai_chat
+render_simple_ai_chat()
