@@ -359,6 +359,6 @@ except Exception as e:
     st.error(f"Error loading finance data: {str(e)}")
     st.info("Please check your database connection and try again.")
 
-# Render simple AI chat
-from src.simple_ai_chat import render_simple_ai_chat
-render_simple_ai_chat()
+# Render sidebar AI chat
+from src.sidebar_ai_chat import render_sidebar_ai_chat
+render_sidebar_ai_chat()
