@@ -169,16 +169,39 @@ st.markdown("""
     }
     
     .stApp[data-theme="dark"] .sidebar-logo {
-        background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+        background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 25%, #16213e 50%, #0f3460 75%, #533483 100%);
         color: white !important;
     }
     
     .stApp[data-theme="dark"] .sidebar-logo h3 {
         color: white !important;
+        background: linear-gradient(45deg, #ffffff, #e2e8f0);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
     }
     
     .stApp[data-theme="dark"] .sidebar-logo p {
-        color: rgba(255, 255, 255, 0.8) !important;
+        color: rgba(255, 255, 255, 0.9) !important;
+    }
+    
+    .stApp[data-theme="dark"] .sidebar-section {
+        background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+        border: 1px solid rgba(148, 163, 184, 0.3);
+        color: #f1f5f9;
+    }
+    
+    .stApp[data-theme="dark"] .sidebar-section h3 {
+        color: #f1f5f9 !important;
+    }
+    
+    .stApp[data-theme="dark"] .sidebar-info {
+        background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+        border: 1px solid #60a5fa;
+    }
+    
+    .stApp[data-theme="dark"] .sidebar-info p {
+        color: #dbeafe !important;
     }
     
     /* Force white text in headers for dark mode */
@@ -343,32 +366,110 @@ st.markdown("""
     .sidebar-logo {
         text-align: center;
         margin-bottom: 2rem;
-        padding: 2rem 1.5rem;
+        padding: 2.5rem 1.5rem;
         background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 25%, #16213e 50%, #0f3460 75%, #533483 100%);
-        border-radius: 16px;
+        border-radius: 20px;
         margin: 0 0.5rem 2rem 0.5rem;
         border: 1px solid rgba(255, 255, 255, 0.1);
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-        backdrop-filter: blur(10px);
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(15px);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .sidebar-logo::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(45deg, rgba(255,255,255,0.1) 0%, transparent 50%);
+        pointer-events: none;
     }
     
     .sidebar-logo img {
-        height: 40px;
-        margin-bottom: 0.5rem;
+        height: 50px;
+        margin-bottom: 1rem;
+        filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
+        position: relative;
+        z-index: 1;
     }
     
     .sidebar-logo h3 {
         color: white;
         margin: 0;
-        font-size: 1.2rem;
-        font-weight: 700;
-        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        font-size: 1.4rem;
+        font-weight: 800;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
         letter-spacing: -0.5px;
+        position: relative;
+        z-index: 1;
+        background: linear-gradient(45deg, #ffffff, #e2e8f0);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
     }
     
     .sidebar-logo p {
         color: rgba(255, 255, 255, 0.9);
         margin: 0.5rem 0 0 0;
+        font-size: 1rem;
+        font-weight: 500;
+        position: relative;
+        z-index: 1;
+    }
+    
+    .sidebar-section {
+        background: linear-gradient(135deg, #f8fafc 0%, #e2e8f6 100%);
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin: 1rem 0.5rem;
+        border: 1px solid rgba(148, 163, 184, 0.2);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        backdrop-filter: blur(10px);
+    }
+    
+    .sidebar-section h3 {
+        color: #1e293b;
+        margin: 0 0 1rem 0;
+        font-size: 1.1rem;
+        font-weight: 700;
+        text-align: center;
+        letter-spacing: -0.3px;
+    }
+    
+    .sidebar-button {
+        background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+        color: white;
+        border: none;
+        border-radius: 10px;
+        padding: 0.8rem 1rem;
+        font-weight: 600;
+        font-size: 0.9rem;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+        margin-bottom: 0.5rem;
+        width: 100%;
+    }
+    
+    .sidebar-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
+    }
+    
+    .sidebar-info {
+        background: linear-gradient(135deg, #e0f2fe 0%, #b3e5fc 100%);
+        border: 1px solid #81d4fa;
+        border-radius: 10px;
+        padding: 1rem;
+        margin: 1rem 0.5rem;
+        text-align: center;
+    }
+    
+    .sidebar-info p {
+        color: #0277bd;
+        margin: 0;
         font-size: 0.9rem;
         font-weight: 500;
     }
@@ -604,7 +705,7 @@ except FileNotFoundError:
     </div>
     """, unsafe_allow_html=True)
 
-# Sidebar - Company logo only
+# Enhanced Sidebar with Professional Styling
 with st.sidebar:
     # Company logo in sidebar
     try:
@@ -613,7 +714,7 @@ with st.sidebar:
         
         st.markdown(f"""
         <div class="sidebar-logo">
-            <img src="data:image/png;base64,{logo_base64}" alt="Reflexta Data Intelligence" style="height: 40px; margin-bottom: 0.5rem;">
+            <img src="data:image/png;base64,{logo_base64}" alt="Reflexta Data Intelligence">
             <h3>Reflexta Data Intelligence</h3>
             <p>Enterprise Analytics Platform</p>
         </div>
@@ -626,17 +727,68 @@ with st.sidebar:
         </div>
         """, unsafe_allow_html=True)
     
-    st.markdown("---")
-    st.markdown("### Quick Actions")
-    if st.button("Refresh Data", use_container_width=True):
+    # Quick Actions Section
+    st.markdown("""
+    <div class="sidebar-section">
+        <h3>⚡ Quick Actions</h3>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    if st.button("🔄 Refresh Data", use_container_width=True, key="refresh_btn"):
         st.rerun()
     
-    if st.button("Export Report", use_container_width=True):
+    if st.button("📊 Export Report", use_container_width=True, key="export_btn"):
         st.success("Report export feature coming soon!")
     
-    st.markdown("---")
-    st.markdown("### Navigation")
-    st.info("Navigate to specific dashboards for detailed analytics and filtering options.")
+    if st.button("⚙️ Settings", use_container_width=True, key="settings_btn"):
+        st.info("Settings panel coming soon!")
+    
+    # Navigation Section
+    st.markdown("""
+    <div class="sidebar-section">
+        <h3>🧭 Navigation</h3>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # Dashboard Navigation Buttons
+    if st.button("📊 Executive Dashboard", use_container_width=True, key="exec_dashboard"):
+        st.switch_page("app.py")
+    
+    if st.button("💰 Finance Dashboard", use_container_width=True, key="finance_dashboard"):
+        st.switch_page("pages/03_Finance_Dashboard.py")
+    
+    if st.button("🛒 Procurement Dashboard", use_container_width=True, key="procurement_dashboard"):
+        st.switch_page("pages/04_Procurement_Dashboard.py")
+    
+    if st.button("📈 Analytics Dashboard", use_container_width=True, key="analytics_dashboard"):
+        st.switch_page("pages/05_Analytics_Dashboard.py")
+    
+    if st.button("🗄️ Database Analysis", use_container_width=True, key="db_analysis"):
+        st.switch_page("pages/00_Database_Analysis.py")
+    
+    # Information Section
+    st.markdown("""
+    <div class="sidebar-info">
+        <p>💡 Navigate to specific dashboards for detailed analytics and filtering options.</p>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # Status Section
+    st.markdown("""
+    <div class="sidebar-section">
+        <h3>📊 System Status</h3>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # Database connection status
+    if health_check():
+        st.success("🟢 Database Connected")
+    else:
+        st.error("🔴 Database Disconnected")
+    
+    # Current time
+    current_time = dt.datetime.now().strftime("%H:%M:%S")
+    st.info(f"🕐 Last Updated: {current_time}")
 
 if not health_check():
     st.error("Database connection failed. Please check your connection settings.")
