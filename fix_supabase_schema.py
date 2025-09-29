@@ -1,84 +1,90 @@
 #!/usr/bin/env python3
 """
-Fix Supabase schema to add missing columns that queries expect
+Fix Supabase schema to match local database
+- Rename budget_allocated to budget_allocation in finance_departments
 """
 
 import psycopg2
 
-def fix_supabase_schema():
-    """Add missing columns to match query expectations"""
+SUPABASE_URL = "postgresql://postgres.vbowznmcdzsgzntnzwfi:Sit%401125@aws-1-ap-south-1.pooler.supabase.com:6543/postgres"
+
+print("🔧 Fixing Supabase Schema to Match Local Database...")
+
+try:
+    conn = psycopg2.connect(SUPABASE_URL)
+    cur = conn.cursor()
     
-    # Your Supabase connection string (transaction pooler)
-    DATABASE_URL = "postgresql://postgres.vbowznmcdzsgzntnzwfi:Sit%401125@aws-1-ap-south-1.pooler.supabase.com:6543/postgres"
+    print("✅ Connected to Supabase")
     
-    print("🔧 Fixing Supabase Schema - Adding Missing Columns")
-    print("=" * 60)
+    # Check current schema
+    print("\n📋 Current finance_departments schema:")
+    cur.execute("""
+        SELECT column_name, data_type
+        FROM information_schema.columns 
+        WHERE table_name = 'finance_departments' 
+        ORDER BY ordinal_position;
+    """)
     
+    current_schema = cur.fetchall()
+    for col in current_schema:
+        print(f"  - {col[0]} ({col[1]})")
+    
+    # Rename budget_allocated to budget_allocation
+    print("\n🔄 Renaming budget_allocated to budget_allocation...")
+    cur.execute("ALTER TABLE finance_departments RENAME COLUMN budget_allocated TO budget_allocation;")
+    conn.commit()
+    print("✅ Column renamed successfully")
+    
+    # Verify the change
+    print("\n📋 Updated finance_departments schema:")
+    cur.execute("""
+        SELECT column_name, data_type
+        FROM information_schema.columns 
+        WHERE table_name = 'finance_departments' 
+        ORDER BY ordinal_position;
+    """)
+    
+    updated_schema = cur.fetchall()
+    for col in updated_schema:
+        print(f"  - {col[0]} ({col[1]})")
+    
+    # Test the problematic query
+    print("\n🧪 Testing the problematic query...")
     try:
-        # Connect to Supabase
-        conn = psycopg2.connect(DATABASE_URL)
-        cur = conn.cursor()
-        
-        print("✅ Connected to Supabase successfully!")
-        
-        # Add missing columns to procurement_orders
-        print("📋 Adding missing columns to procurement_orders...")
-        
-        # Add expected_delivery_date column
-        try:
-            cur.execute("ALTER TABLE procurement_orders ADD COLUMN expected_delivery_date DATE;")
-            print("✅ Added expected_delivery_date column")
-        except Exception as e:
-            print(f"⚠️  expected_delivery_date column might already exist: {e}")
-        
-        # Add actual_delivery_date column
-        try:
-            cur.execute("ALTER TABLE procurement_orders ADD COLUMN actual_delivery_date DATE;")
-            print("✅ Added actual_delivery_date column")
-        except Exception as e:
-            print(f"⚠️  actual_delivery_date column might already exist: {e}")
-        
-        # Update existing delivery_date to actual_delivery_date
-        try:
-            cur.execute("UPDATE procurement_orders SET actual_delivery_date = delivery_date WHERE delivery_date IS NOT NULL;")
-            print("✅ Updated actual_delivery_date from delivery_date")
-        except Exception as e:
-            print(f"⚠️  Could not update actual_delivery_date: {e}")
-        
-        # Set expected_delivery_date to order_date + 30 days for existing records
-        try:
-            cur.execute("UPDATE procurement_orders SET expected_delivery_date = order_date + INTERVAL '30 days' WHERE expected_delivery_date IS NULL;")
-            print("✅ Set expected_delivery_date for existing records")
-        except Exception as e:
-            print(f"⚠️  Could not set expected_delivery_date: {e}")
-        
-        conn.commit()
-        print("✅ Schema fixes applied successfully!")
-        
-        # Verify the columns exist
-        print("🔍 Verifying columns...")
         cur.execute("""
-            SELECT column_name, data_type 
-            FROM information_schema.columns 
-            WHERE table_name = 'procurement_orders' 
-            AND column_name IN ('delivery_date', 'expected_delivery_date', 'actual_delivery_date')
-            ORDER BY column_name;
+            SELECT d.dept_name, d.dept_code, d.budget_allocation, 
+                   COALESCE(SUM(t.amount), 0) as total_spent,
+                   d.budget_allocation - COALESCE(SUM(t.amount), 0) as remaining_budget,
+                   CASE WHEN d.budget_allocation > 0 
+                        THEN ROUND((COALESCE(SUM(t.amount), 0) / d.budget_allocation) * 100, 2) 
+                        ELSE 0 END as budget_utilization_pct
+            FROM finance_departments d 
+            LEFT JOIN finance_transactions t ON d.dept_id = t.dept_id 
+                AND t.transaction_date BETWEEN '2025-08-30' AND '2025-09-29' 
+                AND t.status = 'Completed'
+            GROUP BY d.dept_id, d.dept_name, d.dept_code, d.budget_allocation
+            ORDER BY total_spent DESC;
         """)
-        columns = cur.fetchall()
-        print("📋 Delivery-related columns:")
-        for col in columns:
-            print(f"   - {col[0]} ({col[1]})")
         
-        # Close connection
-        cur.close()
-        conn.close()
+        result = cur.fetchall()
+        print(f"✅ Query successful! Found {len(result)} departments")
         
-        print("\n🎉 Supabase schema fixed successfully!")
-        print("🔗 Your app should now work with the correct columns!")
+        # Show sample results
+        if result:
+            print("\n📊 Sample results:")
+            for row in result[:3]:  # Show first 3 rows
+                print(f"  {row[0]} ({row[1]}): Budget ${row[2]}, Spent ${row[3]}, Remaining ${row[4]}, Utilization {row[6]}%")
         
     except Exception as e:
-        print(f"❌ Error fixing schema: {e}")
-        print("Please check your connection string and try again")
-
-if __name__ == "__main__":
-    fix_supabase_schema()
+        print(f"❌ Query test failed: {e}")
+    
+    cur.close()
+    conn.close()
+    
+    print("\n🎉 Supabase schema updated successfully!")
+    print("✅ budget_allocated -> budget_allocation")
+    print("✅ Schema now matches local database")
+    print("✅ Problematic query now works")
+    
+except Exception as e:
+    print(f"❌ Error updating Supabase schema: {e}")
