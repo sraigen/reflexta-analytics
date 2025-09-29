@@ -164,16 +164,36 @@ def get_ai_assistant() -> Optional[AIAssistant]:
     """Get AI assistant instance if API key is available."""
     try:
         # Try to get API key from Streamlit secrets
-        api_key = st.secrets.get("deepseek_api_key")
+        api_key = None
         
+        # Method 1: Direct access to secrets
+        try:
+            api_key = st.secrets["deepseek_api_key"]
+        except (KeyError, AttributeError):
+            pass
+        
+        # Method 2: Try get method
         if not api_key:
-            # Try environment variable as fallback
+            try:
+                api_key = st.secrets.get("deepseek_api_key")
+            except (KeyError, AttributeError):
+                pass
+        
+        # Method 3: Environment variable as fallback
+        if not api_key:
             import os
             api_key = os.getenv("DEEPSEEK_API_KEY")
         
+        # Debug information
         if api_key:
-            return AIAssistant(api_key)
+            # Check if API key looks valid
+            if api_key.startswith("sk-") and len(api_key) > 20:
+                return AIAssistant(api_key)
+            else:
+                st.error(f"Invalid API key format: {api_key[:10]}...")
+                return None
         else:
+            st.error("DeepSeek API key not found in secrets or environment variables")
             return None
             
     except Exception as e:

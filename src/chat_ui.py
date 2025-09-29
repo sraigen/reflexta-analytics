@@ -72,6 +72,31 @@ def render_chat_interface():
     # Check if AI assistant is available
     if st.session_state.ai_assistant is None:
         st.error("🤖 AI Assistant not available. Please configure DeepSeek API key in secrets.")
+        
+        # Debug information
+        with st.expander("🔧 Debug Information"):
+            st.write("**Secrets Status:**")
+            try:
+                if hasattr(st, 'secrets'):
+                    st.write("✅ Streamlit secrets available")
+                    try:
+                        api_key = st.secrets.get("deepseek_api_key")
+                        if api_key:
+                            st.write(f"✅ API key found: {api_key[:10]}...")
+                        else:
+                            st.write("❌ API key not found in secrets")
+                    except Exception as e:
+                        st.write(f"❌ Error reading secrets: {str(e)}")
+                else:
+                    st.write("❌ Streamlit secrets not available")
+            except Exception as e:
+                st.write(f"❌ Error checking secrets: {str(e)}")
+            
+            st.write("**Configuration:**")
+            st.write("1. Make sure `.streamlit/secrets.toml` exists")
+            st.write("2. Add `deepseek_api_key = \"your_api_key_here\"` to secrets.toml")
+            st.write("3. Restart the Streamlit application")
+        
         return
     
     # Chat header
