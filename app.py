@@ -10,12 +10,12 @@ from src.finance_queries import get_finance_kpis, get_finance_summary
 from src.procurement_queries import get_procurement_kpis, get_procurement_summary
 from src.ui import kpi_row, section_header, empty_state
 from src.popup_chat import render_popup_chat
-from src.ai_assistant import get_ai_assistant
+from src.enhanced_ai_assistant import get_enhanced_ai_assistant
 
 # Initialize AI assistant
 if "ai_assistant" not in st.session_state:
     try:
-        st.session_state.ai_assistant = get_ai_assistant()
+        st.session_state.ai_assistant = get_enhanced_ai_assistant()
     except Exception as e:
         st.session_state.ai_assistant = None
 

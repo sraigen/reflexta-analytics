@@ -5,7 +5,7 @@ Professional Popup AI Chat Bot for Reflexta Analytics Platform.
 
 import streamlit as st
 from datetime import datetime
-from src.ai_assistant import get_ai_assistant
+from src.enhanced_ai_assistant import get_enhanced_ai_assistant
 
 
 def render_popup_chat():
@@ -17,7 +17,7 @@ def render_popup_chat():
     
     # Initialize AI assistant if not exists
     if "popup_ai_assistant" not in st.session_state:
-        st.session_state.popup_ai_assistant = get_ai_assistant()
+        st.session_state.popup_ai_assistant = get_enhanced_ai_assistant()
     
     # Professional CSS for popup chat
     st.markdown("""
