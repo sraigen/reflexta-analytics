@@ -9,6 +9,7 @@ from src.finance_queries import (
     get_finance_summary,
     get_finance_monthly_trends,
     get_finance_kpis,
+    get_finance_transactions,
     get_account_analysis,
     get_cost_center_analysis,
     get_budget_vs_actual,
@@ -281,6 +282,9 @@ try:
     
     # Interactive Charts with Drill-Down
     st.markdown('<div class="section-header">Interactive Analytics</div>', unsafe_allow_html=True)
+    
+    # Get finance transactions for drill-down
+    finance_data = get_finance_transactions(from_date, to_date, dept_id, transaction_type)
     
     if not finance_data.empty:
         # Create tabs for different chart types

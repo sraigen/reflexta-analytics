@@ -8,6 +8,7 @@ from src.db import health_check
 from src.procurement_queries import (
     get_procurement_summary,
     get_procurement_kpis,
+    get_procurement_transactions,
     get_vendor_performance,
     get_category_analysis,
     get_procurement_trends,
@@ -283,6 +284,9 @@ try:
     
     # Interactive Charts with Drill-Down
     st.markdown('<div class="section-header">Interactive Analytics</div>', unsafe_allow_html=True)
+    
+    # Get procurement transactions for drill-down
+    procurement_data = get_procurement_transactions(from_date, to_date, dept_id, order_status)
     
     if not procurement_data.empty:
         # Create tabs for different chart types

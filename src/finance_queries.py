@@ -82,6 +82,49 @@ def get_finance_monthly_trends(from_dt: date, to_dt: date, transaction_type: Opt
 
 
 @st.cache_data(ttl=60, show_spinner=False)
+def get_finance_transactions(from_dt: date, to_dt: date, dept_id: Optional[int] = None, transaction_type: Optional[str] = None) -> pd.DataFrame:
+    """Get all finance transactions for drill-down analysis."""
+    
+    params = {"from_dt": from_dt, "to_dt": to_dt}
+    where_dept = ""
+    where_type = ""
+    
+    if dept_id:
+        where_dept = " AND d.dept_id = :dept_id"
+        params["dept_id"] = dept_id
+    
+    if transaction_type and transaction_type != "All":
+        where_type = " AND t.transaction_type = :transaction_type"
+        params["transaction_type"] = transaction_type
+    
+    sql = f"""
+    SELECT 
+        t.transaction_id,
+        t.transaction_date as date,
+        t.transaction_type as type,
+        t.amount,
+        t.description,
+        t.category,
+        t.status,
+        d.dept_name as department,
+        COALESCE(d.sub_dept_name, 'General') as sub_department
+    FROM transactions t
+    LEFT JOIN departments d ON t.dept_id = d.dept_id
+    WHERE t.transaction_date BETWEEN :from_dt AND :to_dt
+    {where_dept}
+    {where_type}
+    ORDER BY t.transaction_date DESC
+    """
+    
+    try:
+        conn = get_conn()
+        return pd.read_sql(sql, conn, params=params)
+    except Exception as e:
+        st.error(f"Error fetching finance transactions: {str(e)}")
+        return pd.DataFrame()
+
+
+@st.cache_data(ttl=60, show_spinner=False)
 def get_finance_kpis(from_dt: date, to_dt: date, dept_id: Optional[int] = None) -> pd.DataFrame:
     """Get key finance KPIs with growth calculations."""
     
