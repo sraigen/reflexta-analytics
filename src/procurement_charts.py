@@ -55,13 +55,29 @@ def procurement_trends_chart(df: pd.DataFrame, group_by: str = "month") -> go.Fi
     if df.empty:
         return go.Figure()
     
-    # Use the appropriate column name based on group_by
-    if group_by == "month":
-        x_column = "month_name" if "month_name" in df.columns else "month"
-    elif group_by == "quarter":
-        x_column = "quarter_name" if "quarter_name" in df.columns else "quarter"
-    else:  # week
-        x_column = "week_name" if "week_name" in df.columns else "week"
+    # Determine the correct x-axis column based on available columns
+    x_column = None
+    if "month_name" in df.columns:
+        x_column = "month_name"
+    elif "quarter_name" in df.columns:
+        x_column = "quarter_name"
+    elif "week_name" in df.columns:
+        x_column = "week_name"
+    elif "month" in df.columns:
+        x_column = "month"
+    elif "quarter" in df.columns:
+        x_column = "quarter"
+    elif "week" in df.columns:
+        x_column = "week"
+    else:
+        # Fallback to first available column that looks like a date/time column
+        for col in df.columns:
+            if col in ['year', 'month', 'quarter', 'week', 'month_name', 'quarter_name', 'week_name']:
+                x_column = col
+                break
+    
+    if x_column is None:
+        return go.Figure()
     
     fig = px.line(
         df,
