@@ -33,71 +33,91 @@ from src.ui import empty_state
 
 st.set_page_config(page_title="Analytics Dashboard", layout="wide")
 
-# Analytics Dashboard Filters - Always Accessible
-with st.expander("🔧 Analytics Filters - Click to Expand/Collapse", expanded=True):
-    col1, col2, col3, col4 = st.columns(4)
+# Analytics Dashboard Filters - Sticky Container
+st.markdown("""
+<style>
+.sticky-filters {
+    position: sticky;
+    top: 0;
+    background: white;
+    z-index: 1000;
+    padding: 1rem;
+    border-bottom: 2px solid #e0e0e0;
+    margin-bottom: 1rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+</style>
+""", unsafe_allow_html=True)
 
-    with col1:
-        from_date = st.date_input(
-            "From Date", 
-            value=dt.date.today() - dt.timedelta(days=30),
-            help="Select start date for analysis"
-        )
+with st.container():
+    st.markdown('<div class="sticky-filters">', unsafe_allow_html=True)
+    
+    with st.expander("🔧 Analytics Filters - Click to Expand/Collapse", expanded=True):
+        col1, col2, col3, col4 = st.columns(4)
 
-    with col2:
-        to_date = st.date_input(
-            "To Date", 
-            value=dt.date.today(),
-            help="Select end date for analysis"
-        )
+        with col1:
+            from_date = st.date_input(
+                "From Date", 
+                value=dt.date.today() - dt.timedelta(days=30),
+                help="Select start date for analysis"
+            )
 
-    with col3:
-        department = st.selectbox(
-            "Department",
-            options=["All", "Finance", "Procurement", "IT", "HR", "Operations", "Marketing", "Sales", "Legal"],
-            help="Filter by specific department"
-        )
+        with col2:
+            to_date = st.date_input(
+                "To Date", 
+                value=dt.date.today(),
+                help="Select end date for analysis"
+            )
 
-    with col4:
-        analysis_type = st.selectbox(
-            "Analysis Type",
-            options=["Comprehensive", "Financial Only", "Procurement Only", "Performance Only"],
-            help="Select type of analysis"
-        )
+        with col3:
+            department = st.selectbox(
+                "Department",
+                options=["All", "Finance", "Procurement", "IT", "HR", "Operations", "Marketing", "Sales", "Legal"],
+                help="Filter by specific department"
+            )
 
-    # Additional filters
-    st.markdown("**Additional Filters**")
-    col1, col2, col3 = st.columns(3)
+        with col4:
+            analysis_type = st.selectbox(
+                "Analysis Type",
+                options=["Comprehensive", "Financial Only", "Procurement Only", "Performance Only"],
+                help="Select type of analysis"
+            )
 
-    with col1:
-        time_period = st.selectbox(
-            "Time Period",
-            options=["Last 30 Days", "Last 90 Days", "Last 6 Months", "Last Year", "Custom"],
-            help="Select time period for analysis"
-        )
+        # Additional filters
+        st.markdown("**Additional Filters**")
+        col1, col2, col3 = st.columns(3)
 
-    with col2:
-        metric_focus = st.selectbox(
-            "Metric Focus",
-            options=["All Metrics", "Financial KPIs", "Operational KPIs", "Vendor KPIs"],
-            help="Focus on specific metrics"
-        )
+        with col1:
+            time_period = st.selectbox(
+                "Time Period",
+                options=["Last 30 Days", "Last 90 Days", "Last 6 Months", "Last Year", "Custom"],
+                help="Select time period for analysis"
+            )
 
-    with col3:
-        data_quality = st.selectbox(
-            "Data Quality",
-            options=["All Data", "Complete Records", "Validated Data"],
-            help="Filter by data quality"
-        )
+        with col2:
+            metric_focus = st.selectbox(
+                "Metric Focus",
+                options=["All Metrics", "Financial KPIs", "Operational KPIs", "Vendor KPIs"],
+                help="Focus on specific metrics"
+            )
 
-    # Get department ID if specific department is selected
-    dept_id = None
-    if department != "All":
-        dept_mapping = {
-            "Finance": 1, "Procurement": 2, "IT": 3, "HR": 4, "Operations": 5,
-            "Marketing": 6, "Sales": 7, "Legal": 8
-        }
-        dept_id = dept_mapping.get(department)
+        with col3:
+            data_quality = st.selectbox(
+                "Data Quality",
+                options=["All Data", "Complete Records", "Validated Data"],
+                help="Filter by data quality"
+            )
+
+        # Get department ID if specific department is selected
+        dept_id = None
+        if department != "All":
+            dept_mapping = {
+                "Finance": 1, "Procurement": 2, "IT": 3, "HR": 4, "Operations": 5,
+                "Marketing": 6, "Sales": 7, "Legal": 8
+            }
+            dept_id = dept_mapping.get(department)
+    
+    st.markdown('</div>', unsafe_allow_html=True)
 
 st.markdown("---")
 
