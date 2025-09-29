@@ -15,10 +15,16 @@ from src.db import get_conn
 
 
 @st.cache_data(ttl=60, show_spinner=False)
-def get_executive_summary() -> pd.DataFrame:
+def get_executive_summary(from_dt: dt.date, to_dt: dt.date, dept_id: Any = None) -> pd.DataFrame:
     """Get executive summary with key business metrics."""
     
-    sql = """
+    params = {"from_dt": from_dt, "to_dt": to_dt}
+    where_dept = ""
+    if dept_id:
+        where_dept = " AND dept_id = :dept_id"
+        params["dept_id"] = dept_id
+    
+    sql = f"""
     WITH finance_summary AS (
         SELECT 
             COUNT(*) as total_transactions,
@@ -27,16 +33,18 @@ def get_executive_summary() -> pd.DataFrame:
             COALESCE(SUM(CASE WHEN transaction_type = 'Revenue' THEN amount ELSE 0 END) - 
                      SUM(CASE WHEN transaction_type = 'Expense' THEN amount ELSE 0 END), 0) as net_profit
         FROM finance_transactions
-        WHERE transaction_date >= CURRENT_DATE - INTERVAL '30 days'
+        WHERE transaction_date BETWEEN :from_dt AND :to_dt
+        {where_dept}
     ),
     procurement_summary AS (
         SELECT 
             COUNT(*) as total_orders,
-            COALESCE(SUM(total_amount), 0) as total_procurement_value,
-            COALESCE(AVG(total_amount), 0) as avg_order_value,
+            COALESCE(SUM(grand_total), 0) as total_procurement_value,
+            COALESCE(AVG(grand_total), 0) as avg_order_value,
             COUNT(CASE WHEN status = 'Received' THEN 1 END) as completed_orders
         FROM procurement_orders
-        WHERE order_date >= CURRENT_DATE - INTERVAL '30 days'
+        WHERE order_date BETWEEN :from_dt AND :to_dt
+        {where_dept}
     ),
     budget_summary AS (
         SELECT 
@@ -72,10 +80,16 @@ def get_executive_summary() -> pd.DataFrame:
 
 
 @st.cache_data(ttl=60, show_spinner=False)
-def get_department_performance() -> pd.DataFrame:
+def get_department_performance(from_dt: dt.date, to_dt: dt.date, dept_id: Any = None) -> pd.DataFrame:
     """Get comprehensive department performance analysis."""
     
-    sql = """
+    params = {"from_dt": from_dt, "to_dt": to_dt}
+    where_dept = ""
+    if dept_id:
+        where_dept = " AND d.dept_id = :dept_id"
+        params["dept_id"] = dept_id
+    
+    sql = f"""
     WITH dept_finance AS (
         SELECT 
             d.dept_id,
@@ -88,19 +102,21 @@ def get_department_performance() -> pd.DataFrame:
             COALESCE(SUM(t.amount), 0) as total_amount
         FROM finance_departments d
         LEFT JOIN finance_transactions t ON d.dept_id = t.dept_id
-        WHERE t.transaction_date >= CURRENT_DATE - INTERVAL '90 days' OR t.transaction_date IS NULL
+        WHERE (t.transaction_date BETWEEN :from_dt AND :to_dt OR t.transaction_date IS NULL)
+        {where_dept}
         GROUP BY d.dept_id, d.dept_name, d.dept_code, d.budget_allocation
     ),
     dept_procurement AS (
         SELECT 
             d.dept_id,
             COUNT(o.order_id) as order_count,
-            COALESCE(SUM(o.total_amount), 0) as procurement_value,
-            COALESCE(AVG(o.total_amount), 0) as avg_order_value,
+            COALESCE(SUM(o.grand_total), 0) as procurement_value,
+            COALESCE(AVG(o.grand_total), 0) as avg_order_value,
             COUNT(CASE WHEN o.status = 'Received' THEN 1 END) as completed_orders
         FROM finance_departments d
         LEFT JOIN procurement_orders o ON d.dept_id = o.dept_id
-        WHERE o.order_date >= CURRENT_DATE - INTERVAL '90 days' OR o.order_date IS NULL
+        WHERE (o.order_date BETWEEN :from_dt AND :to_dt OR o.order_date IS NULL)
+        {where_dept}
         GROUP BY d.dept_id
     )
     SELECT 
@@ -130,11 +146,11 @@ def get_department_performance() -> pd.DataFrame:
     """
     
     conn = get_conn()
-    return conn.query(sql)
+    return conn.query(sql, params=params)
 
 
 @st.cache_data(ttl=60, show_spinner=False)
-def get_vendor_performance_analysis() -> pd.DataFrame:
+def get_vendor_performance_analysis(from_dt: dt.date, to_dt: dt.date, dept_id: Any = None) -> pd.DataFrame:
     """Get comprehensive vendor performance analysis."""
     
     sql = """
@@ -193,7 +209,7 @@ def get_vendor_performance_analysis() -> pd.DataFrame:
 
 
 @st.cache_data(ttl=60, show_spinner=False)
-def get_financial_trends() -> pd.DataFrame:
+def get_financial_trends(from_dt: dt.date, to_dt: dt.date, dept_id: Any = None) -> pd.DataFrame:
     """Get financial trends over time."""
     
     sql = """
@@ -230,7 +246,7 @@ def get_financial_trends() -> pd.DataFrame:
 
 
 @st.cache_data(ttl=60, show_spinner=False)
-def get_procurement_trends() -> pd.DataFrame:
+def get_procurement_trends(from_dt: dt.date, to_dt: dt.date, dept_id: Any = None) -> pd.DataFrame:
     """Get procurement trends over time."""
     
     sql = """
@@ -267,7 +283,7 @@ def get_procurement_trends() -> pd.DataFrame:
 
 
 @st.cache_data(ttl=60, show_spinner=False)
-def get_budget_vs_actual_analysis() -> pd.DataFrame:
+def get_budget_vs_actual_analysis(from_dt: dt.date, to_dt: dt.date, dept_id: Any = None) -> pd.DataFrame:
     """Get detailed budget vs actual analysis."""
     
     sql = """
@@ -328,7 +344,7 @@ def get_budget_vs_actual_analysis() -> pd.DataFrame:
 
 
 @st.cache_data(ttl=60, show_spinner=False)
-def get_category_spending_analysis() -> pd.DataFrame:
+def get_category_spending_analysis(from_dt: dt.date, to_dt: dt.date, dept_id: Any = None) -> pd.DataFrame:
     """Get spending analysis by category."""
     
     sql = """

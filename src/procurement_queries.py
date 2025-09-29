@@ -45,7 +45,7 @@ def get_procurement_summary(from_dt: date, to_dt: date, dept_id: Optional[int] =
 
 @st.cache_data(ttl=60, show_spinner=False)
 def get_procurement_kpis(from_dt: date, to_dt: date, dept_id: Optional[int] = None) -> pd.DataFrame:
-    """Get key procurement KPIs."""
+    """Get key procurement KPIs with growth calculations."""
     
     params = {"from_dt": from_dt, "to_dt": to_dt}
     where_dept = ""
@@ -53,21 +53,49 @@ def get_procurement_kpis(from_dt: date, to_dt: date, dept_id: Optional[int] = No
         where_dept = " AND dept_id = :dept_id"
         params["dept_id"] = dept_id
     
+    # Calculate previous period for growth comparison
+    from datetime import timedelta
+    period_days = (to_dt - from_dt).days
+    prev_from_dt = from_dt - timedelta(days=period_days)
+    prev_to_dt = from_dt - timedelta(days=1)
+    
     sql = f"""
+    WITH current_period AS (
+        SELECT 
+            COUNT(*) as total_orders,
+            COALESCE(SUM(grand_total), 0) as total_spend,
+            COALESCE(AVG(grand_total), 0) as avg_order_value,
+            COUNT(DISTINCT vendor_id) as active_vendors,
+            COUNT(DISTINCT category_id) as unique_categories,
+            COUNT(CASE WHEN status = 'Received' THEN 1 END) as completed_orders,
+            COUNT(CASE WHEN status IN ('Draft', 'Submitted', 'Approved', 'Ordered') THEN 1 END) as pending_orders,
+            COUNT(CASE WHEN priority = 'High' OR priority = 'Urgent' THEN 1 END) as high_priority_orders
+        FROM procurement_orders
+        WHERE order_date BETWEEN :from_dt AND :to_dt
+            {where_dept}
+    ),
+    previous_period AS (
+        SELECT 
+            COUNT(*) as prev_total_orders,
+            COALESCE(SUM(grand_total), 0) as prev_total_spend,
+            COALESCE(AVG(grand_total), 0) as prev_avg_order_value,
+            COUNT(DISTINCT vendor_id) as prev_active_vendors
+        FROM procurement_orders
+        WHERE order_date BETWEEN :prev_from_dt AND :prev_to_dt
+            {where_dept}
+    )
     SELECT 
-        COUNT(*) as total_orders,
-        SUM(grand_total) as total_value,
-        AVG(grand_total) as avg_order_value,
-        COUNT(DISTINCT vendor_id) as unique_vendors,
-        COUNT(DISTINCT category_id) as unique_categories,
-        COUNT(CASE WHEN status = 'Received' THEN 1 END) as completed_orders,
-        COUNT(CASE WHEN status IN ('Draft', 'Submitted', 'Approved', 'Ordered') THEN 1 END) as pending_orders,
-        COUNT(CASE WHEN priority = 'High' OR priority = 'Urgent' THEN 1 END) as high_priority_orders,
-        NULL as avg_delivery_delay_days
-    FROM procurement_orders
-    WHERE order_date BETWEEN :from_dt AND :to_dt
-        {where_dept}
+        c.*,
+        COALESCE(c.total_orders - p.prev_total_orders, 0) as order_growth,
+        COALESCE(c.total_spend - p.prev_total_spend, 0) as spend_growth,
+        COALESCE(c.avg_order_value - p.prev_avg_order_value, 0) as aov_growth,
+        COALESCE(c.active_vendors - p.prev_active_vendors, 0) as vendor_growth
+    FROM current_period c
+    CROSS JOIN previous_period p
     """
+    
+    params["prev_from_dt"] = prev_from_dt
+    params["prev_to_dt"] = prev_to_dt
     
     conn = get_conn()
     return conn.query(sql, params=params)

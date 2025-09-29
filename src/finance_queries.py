@@ -78,7 +78,7 @@ def get_finance_monthly_trends(from_dt: date, to_dt: date, transaction_type: Opt
 
 @st.cache_data(ttl=60, show_spinner=False)
 def get_finance_kpis(from_dt: date, to_dt: date, dept_id: Optional[int] = None) -> pd.DataFrame:
-    """Get key finance KPIs."""
+    """Get key finance KPIs with growth calculations."""
     
     params = {"from_dt": from_dt, "to_dt": to_dt}
     where_dept = ""
@@ -86,21 +86,52 @@ def get_finance_kpis(from_dt: date, to_dt: date, dept_id: Optional[int] = None) 
         where_dept = " AND dept_id = :dept_id"
         params["dept_id"] = dept_id
     
+    # Calculate previous period for growth comparison
+    from datetime import timedelta
+    period_days = (to_dt - from_dt).days
+    prev_from_dt = from_dt - timedelta(days=period_days)
+    prev_to_dt = from_dt - timedelta(days=1)
+    
     sql = f"""
+    WITH current_period AS (
+        SELECT 
+            COUNT(*) as total_transactions,
+            COALESCE(SUM(CASE WHEN transaction_type = 'Revenue' THEN amount ELSE 0 END), 0) as total_revenue,
+            COALESCE(SUM(CASE WHEN transaction_type = 'Expense' THEN amount ELSE 0 END), 0) as total_expenses,
+            COALESCE(SUM(CASE WHEN transaction_type = 'Revenue' THEN amount ELSE 0 END), 0) - 
+            COALESCE(SUM(CASE WHEN transaction_type = 'Expense' THEN amount ELSE 0 END), 0) as net_income,
+            COALESCE(AVG(amount), 0) as avg_transaction_amount,
+            COUNT(DISTINCT dept_id) as departments_involved,
+            COUNT(DISTINCT account_id) as accounts_used
+        FROM finance_transactions
+        WHERE transaction_date BETWEEN :from_dt AND :to_dt
+            AND status = 'Completed'
+            {where_dept}
+    ),
+    previous_period AS (
+        SELECT 
+            COUNT(*) as prev_total_transactions,
+            COALESCE(SUM(CASE WHEN transaction_type = 'Revenue' THEN amount ELSE 0 END), 0) as prev_total_revenue,
+            COALESCE(SUM(CASE WHEN transaction_type = 'Expense' THEN amount ELSE 0 END), 0) as prev_total_expenses,
+            COALESCE(SUM(CASE WHEN transaction_type = 'Revenue' THEN amount ELSE 0 END), 0) - 
+            COALESCE(SUM(CASE WHEN transaction_type = 'Expense' THEN amount ELSE 0 END), 0) as prev_net_income
+        FROM finance_transactions
+        WHERE transaction_date BETWEEN :prev_from_dt AND :prev_to_dt
+            AND status = 'Completed'
+            {where_dept}
+    )
     SELECT 
-        COUNT(*) as total_transactions,
-        COALESCE(SUM(CASE WHEN transaction_type = 'Revenue' THEN amount ELSE 0 END), 0) as total_revenue,
-        COALESCE(SUM(CASE WHEN transaction_type = 'Expense' THEN amount ELSE 0 END), 0) as total_expenses,
-        COALESCE(SUM(CASE WHEN transaction_type = 'Revenue' THEN amount ELSE 0 END), 0) - 
-        COALESCE(SUM(CASE WHEN transaction_type = 'Expense' THEN amount ELSE 0 END), 0) as net_income,
-        COALESCE(AVG(amount), 0) as avg_transaction_amount,
-        COUNT(DISTINCT dept_id) as departments_involved,
-        COUNT(DISTINCT account_id) as accounts_used
-    FROM finance_transactions
-    WHERE transaction_date BETWEEN :from_dt AND :to_dt
-        AND status = 'Completed'
-        {where_dept}
+        c.*,
+        COALESCE(c.total_revenue - p.prev_total_revenue, 0) as revenue_growth,
+        COALESCE(c.total_expenses - p.prev_total_expenses, 0) as expense_growth,
+        COALESCE(c.net_income - p.prev_net_income, 0) as net_income_growth,
+        COALESCE(c.total_transactions - p.prev_total_transactions, 0) as transaction_growth
+    FROM current_period c
+    CROSS JOIN previous_period p
     """
+    
+    params["prev_from_dt"] = prev_from_dt
+    params["prev_to_dt"] = prev_to_dt
     
     conn = get_conn()
     return conn.query(sql, params=params)
