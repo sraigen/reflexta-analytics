@@ -28,16 +28,22 @@ class EnhancedAIAssistant:
             from src.finance_queries import get_finance_kpis, get_finance_summary
             from src.procurement_queries import get_procurement_kpis, get_procurement_summary
             
-            # Get real data from database
+            # Get real data from database with default date range
             conn = get_conn()
             
-            # Get current KPIs
-            finance_kpis = get_finance_kpis()
-            procurement_kpis = get_procurement_kpis()
+            # Set default date range (last 30 days)
+            from datetime import datetime, timedelta
+            today = datetime.now().date()
+            from_date = today - timedelta(days=30)
+            to_date = today
             
-            # Get department summaries
-            finance_summary = get_finance_summary()
-            procurement_summary = get_procurement_summary()
+            # Get current KPIs with date parameters
+            finance_kpis = get_finance_kpis(from_date, to_date, None)
+            procurement_kpis = get_procurement_kpis(from_date, to_date, None)
+            
+            # Get department summaries with date parameters
+            finance_summary = get_finance_summary(from_date, to_date, None)
+            procurement_summary = get_procurement_summary(from_date, to_date, None)
             
             # Build context with real data
             context = {
@@ -77,7 +83,24 @@ class EnhancedAIAssistant:
             return context
             
         except Exception as e:
-            return {"error": f"Failed to get dashboard context: {str(e)}"}
+            # Return fallback context with basic information
+            return {
+                "current_dashboard": "Executive Dashboard",
+                "real_data": {
+                    "finance_metrics": {"error": "Data access temporarily unavailable"},
+                    "procurement_metrics": {"error": "Data access temporarily unavailable"},
+                    "department_data": {"error": "Data access temporarily unavailable"}
+                },
+                "available_modules": [
+                    "Finance Dashboard - Budget management, transaction tracking, cost center analysis",
+                    "Procurement Dashboard - Vendor management, order tracking, category analysis", 
+                    "Analytics Dashboard - Executive business intelligence and reporting",
+                    "Database Analysis - Schema exploration and data quality checks"
+                ],
+                "data_insights": ["⚠️ Real-time data access temporarily unavailable"],
+                "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                "fallback_mode": True
+            }
     
     def _generate_data_insights(self, finance_kpis, procurement_kpis, finance_summary, procurement_summary):
         """Generate insights from real data."""
@@ -122,27 +145,47 @@ class EnhancedAIAssistant:
             # Get real dashboard context
             context = self.get_real_dashboard_context()
             
-            # Build enhanced prompt with real data
-            system_prompt = f"""You are an AI assistant for Reflexta Data Intelligence, an enterprise analytics platform. 
-            
-            CURRENT REAL DATA CONTEXT:
-            {json.dumps(context, indent=2)}
-            
-            You have access to real-time data from the following modules:
-            - Finance Dashboard: Budget management, transaction tracking, cost center analysis
-            - Procurement Dashboard: Vendor management, order tracking, category analysis
-            - Analytics Dashboard: Executive business intelligence and reporting
-            - Database Analysis: Schema exploration and data quality checks
-            
-            When answering questions:
-            1. Use the ACTUAL data values provided in the context
-            2. Provide specific insights based on real metrics
-            3. Reference actual department performance and KPIs
-            4. Give actionable recommendations based on current data
-            5. Be specific about numbers, percentages, and trends
-            6. If asked about metrics, explain what they mean AND provide current values
-            
-            Always be helpful, accurate, and data-driven in your responses."""
+            # Build enhanced prompt with real data or fallback
+            if context.get('fallback_mode', False):
+                system_prompt = f"""You are an AI assistant for Reflexta Data Intelligence, an enterprise analytics platform. 
+                
+                CURRENT STATUS: Real-time data access is temporarily unavailable, but I can still help with general analytics guidance.
+                
+                AVAILABLE MODULES:
+                - Finance Dashboard: Budget management, transaction tracking, cost center analysis
+                - Procurement Dashboard: Vendor management, order tracking, category analysis
+                - Analytics Dashboard: Executive business intelligence and reporting
+                - Database Analysis: Schema exploration and data quality checks
+                
+                When answering questions:
+                1. Explain what the metrics mean and how they're typically calculated
+                2. Provide general guidance on how to interpret and use these metrics
+                3. Suggest best practices for data analysis and dashboard usage
+                4. Explain how to access specific data in the dashboards
+                5. Be helpful and educational about analytics concepts
+                
+                Always be helpful and provide valuable guidance even without real-time data access."""
+            else:
+                system_prompt = f"""You are an AI assistant for Reflexta Data Intelligence, an enterprise analytics platform. 
+                
+                CURRENT REAL DATA CONTEXT:
+                {json.dumps(context, indent=2)}
+                
+                You have access to real-time data from the following modules:
+                - Finance Dashboard: Budget management, transaction tracking, cost center analysis
+                - Procurement Dashboard: Vendor management, order tracking, category analysis
+                - Analytics Dashboard: Executive business intelligence and reporting
+                - Database Analysis: Schema exploration and data quality checks
+                
+                When answering questions:
+                1. Use the ACTUAL data values provided in the context
+                2. Provide specific insights based on real metrics
+                3. Reference actual department performance and KPIs
+                4. Give actionable recommendations based on current data
+                5. Be specific about numbers, percentages, and trends
+                6. If asked about metrics, explain what they mean AND provide current values
+                
+                Always be helpful, accurate, and data-driven in your responses."""
             
             headers = {
                 "Authorization": f"Bearer {self.api_key}",
