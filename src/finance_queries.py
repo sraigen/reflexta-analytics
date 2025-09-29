@@ -22,7 +22,7 @@ def get_finance_summary(from_dt: date, to_dt: date, dept_id: Optional[int] = Non
     params = {"from_dt": from_dt, "to_dt": to_dt}
     where_dept = ""
     if dept_id:
-        where_dept = " AND d.dept_id = :dept_id"
+        where_dept = " AND t.dept_id = :dept_id"
         params["dept_id"] = dept_id
     
     sql = f"""
@@ -38,11 +38,11 @@ def get_finance_summary(from_dt: date, to_dt: date, dept_id: Optional[int] = Non
             ELSE 0 
         END as budget_utilization_pct
     FROM finance_departments d
-    LEFT JOIN finance_transactions t ON d.dept_id = t.dept_id 
+    LEFT JOIN finance_transactions t ON t.dept_id = t.dept_id 
         AND t.transaction_date BETWEEN :from_dt AND :to_dt
         AND t.status = 'Completed'
         {where_dept}
-    GROUP BY d.dept_id, d.dept_name, d.dept_code, d.budget_allocation
+    GROUP BY t.dept_id, d.dept_name, d.dept_code, d.budget_allocation
     ORDER BY total_spent DESC
     """
     
@@ -90,7 +90,7 @@ def get_finance_transactions(from_dt: date, to_dt: date, dept_id: Optional[int] 
     where_type = ""
     
     if dept_id:
-        where_dept = " AND d.dept_id = :dept_id"
+        where_dept = " AND t.dept_id = :dept_id"
         params["dept_id"] = dept_id
     
     if transaction_type and transaction_type != "All":
@@ -104,12 +104,12 @@ def get_finance_transactions(from_dt: date, to_dt: date, dept_id: Optional[int] 
         t.transaction_type as type,
         t.amount,
         t.description,
-        t.category,
+        t.reference_number as category,
         t.status,
-        d.dept_name as department,
-        COALESCE(d.sub_dept_name, 'General') as sub_department
+        COALESCE(fd.dept_name, 'General') as department,
+        'General' as sub_department
     FROM finance_transactions t
-    LEFT JOIN departments d ON t.dept_id = d.dept_id
+    LEFT JOIN finance_departments fd ON t.dept_id = fd.dept_id
     WHERE t.transaction_date BETWEEN :from_dt AND :to_dt
     {where_dept}
     {where_type}
@@ -222,7 +222,7 @@ def get_cost_center_analysis(from_dt: date, to_dt: date) -> pd.DataFrame:
         SUM(t.amount) as total_amount,
         AVG(t.amount) as avg_amount
     FROM finance_cost_centers cc
-    JOIN finance_departments d ON cc.dept_id = d.dept_id
+    JOIN finance_departments d ON cc.dept_id = t.dept_id
     LEFT JOIN finance_transactions t ON cc.cost_center_id = t.cost_center_id
         AND t.transaction_date BETWEEN :from_dt AND :to_dt
         AND t.status = 'Completed'
@@ -262,14 +262,14 @@ def get_budget_vs_actual(from_dt: date, to_dt: date, dept_id: Optional[int] = No
             ELSE 'Under Budget'
         END as budget_status
     FROM finance_budgets b
-    JOIN finance_departments d ON b.dept_id = d.dept_id
+    JOIN finance_departments d ON b.dept_id = t.dept_id
     LEFT JOIN finance_transactions t ON b.dept_id = t.dept_id 
         AND b.cost_center_id = t.cost_center_id
         AND b.account_id = t.account_id
         AND t.transaction_date BETWEEN :from_dt AND :to_dt
         AND t.status = 'Completed'
         {where_dept}
-    GROUP BY d.dept_id, d.dept_name, b.budget_id, b.budget_name, b.budget_amount
+    GROUP BY t.dept_id, d.dept_name, b.budget_id, b.budget_name, b.budget_amount
     ORDER BY utilization_pct DESC
     """
     
@@ -300,7 +300,7 @@ def get_pending_transactions(from_dt: date, to_dt: date, dept_id: Optional[int] 
         t.created_by,
         t.created_at
     FROM finance_transactions t
-    JOIN finance_departments d ON t.dept_id = d.dept_id
+    JOIN finance_departments d ON t.dept_id = t.dept_id
     JOIN finance_accounts a ON t.account_id = a.account_id
     WHERE t.transaction_date BETWEEN :from_dt AND :to_dt
         AND t.status IN ('Pending', 'Approved')

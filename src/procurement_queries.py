@@ -22,7 +22,7 @@ def get_procurement_summary(from_dt: date, to_dt: date, dept_id: Optional[int] =
     params = {"from_dt": from_dt, "to_dt": to_dt}
     where_dept = ""
     if dept_id:
-        where_dept = " AND d.dept_id = :dept_id"
+        where_dept = " AND o.dept_id = :dept_id"
         params["dept_id"] = dept_id
     
     sql = f"""
@@ -36,10 +36,10 @@ def get_procurement_summary(from_dt: date, to_dt: date, dept_id: Optional[int] =
         COUNT(CASE WHEN po.status IN ('Draft', 'Submitted', 'Approved', 'Ordered') THEN 1 END) as pending_orders,
         COUNT(CASE WHEN po.status = 'Received' THEN 1 END) * 100.0 / NULLIF(COUNT(po.order_id), 0) as completion_rate
     FROM finance_departments d
-    LEFT JOIN procurement_orders po ON d.dept_id = po.dept_id
+    LEFT JOIN procurement_orders po ON o.dept_id = po.dept_id
         AND po.order_date BETWEEN :from_dt AND :to_dt
         {where_dept}
-    GROUP BY d.dept_id, d.dept_name, d.dept_code
+    GROUP BY o.dept_id, d.dept_name, d.dept_code
     ORDER BY total_value DESC
     """
     
@@ -56,26 +56,28 @@ def get_procurement_transactions(from_dt: date, to_dt: date, dept_id: Optional[i
     where_status = ""
     
     if dept_id:
-        where_dept = " AND d.dept_id = :dept_id"
+        where_dept = " AND o.dept_id = :dept_id"
         params["dept_id"] = dept_id
     
     if order_status and order_status != "All":
-        where_status = " AND o.order_status = :order_status"
+        where_status = " AND o.status = :order_status"
         params["order_status"] = order_status
     
     sql = f"""
     SELECT 
         o.order_id,
         o.order_date as date,
-        o.amount,
-        o.description,
-        o.category,
-        o.order_status as status,
-        o.vendor_name,
-        d.dept_name as department,
-        COALESCE(d.sub_dept_name, 'General') as sub_department
+        o.total_amount as amount,
+        o.notes as description,
+        pc.category_name as category,
+        o.status,
+        pv.vendor_name,
+        COALESCE(fd.dept_name, 'General') as department,
+        'General' as sub_department
     FROM procurement_orders o
-    LEFT JOIN departments d ON o.dept_id = d.dept_id
+    LEFT JOIN finance_departments fd ON o.dept_id = fd.dept_id
+    LEFT JOIN procurement_vendors pv ON o.vendor_id = pv.vendor_id
+    LEFT JOIN procurement_categories pc ON o.category_id = pc.category_id
     WHERE o.order_date BETWEEN :from_dt AND :to_dt
     {where_dept}
     {where_status}
@@ -285,7 +287,7 @@ def get_pending_orders(from_dt: date, to_dt: date, dept_id: Optional[int] = None
     FROM procurement_orders po
     JOIN procurement_vendors v ON po.vendor_id = v.vendor_id
     JOIN procurement_categories c ON po.category_id = c.category_id
-    JOIN finance_departments d ON po.dept_id = d.dept_id
+    JOIN finance_departments d ON po.dept_id = o.dept_id
     WHERE po.order_date BETWEEN :from_dt AND :to_dt
         AND po.status IN ('Draft', 'Submitted', 'Approved', 'Ordered')
         {where_dept}
@@ -367,7 +369,7 @@ def get_spend_analysis(from_dt: date, to_dt: date, dept_id: Optional[int] = None
     FROM procurement_orders po
     JOIN procurement_vendors v ON po.vendor_id = v.vendor_id
     JOIN procurement_categories c ON po.category_id = c.category_id
-    JOIN finance_departments d ON po.dept_id = d.dept_id
+    JOIN finance_departments d ON po.dept_id = o.dept_id
     JOIN finance_cost_centers cc ON po.cost_center_id = cc.cost_center_id
     WHERE po.order_date BETWEEN :from_dt AND :to_dt
         {where_dept}
