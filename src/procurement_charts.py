@@ -55,12 +55,20 @@ def procurement_trends_chart(df: pd.DataFrame, group_by: str = "month") -> go.Fi
     if df.empty:
         return go.Figure()
     
+    # Use the appropriate column name based on group_by
+    if group_by == "month":
+        x_column = "month_name" if "month_name" in df.columns else "month"
+    elif group_by == "quarter":
+        x_column = "quarter_name" if "quarter_name" in df.columns else "quarter"
+    else:  # week
+        x_column = "week_name" if "week_name" in df.columns else "week"
+    
     fig = px.line(
         df,
-        x=group_by,
+        x=x_column,
         y='total_value',
         title=f"Procurement Trends by {group_by.title()}",
-        labels={'total_value': 'Total Value ($)', group_by: group_by.title()},
+        labels={'total_value': 'Total Value ($)', x_column: group_by.title()},
         markers=True
     )
     

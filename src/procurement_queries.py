@@ -167,17 +167,21 @@ def get_procurement_trends(from_dt: date, to_dt: date, group_by: str = "month") 
     if group_by == "month":
         date_part = "EXTRACT(MONTH FROM order_date)"
         date_label = "month"
+        date_name = "TO_CHAR(order_date, 'Mon') as month_name"
     elif group_by == "quarter":
         date_part = "EXTRACT(QUARTER FROM order_date)"
         date_label = "quarter"
+        date_name = "TO_CHAR(order_date, 'Q') as quarter_name"
     else:  # week
         date_part = "EXTRACT(WEEK FROM order_date)"
         date_label = "week"
+        date_name = "TO_CHAR(order_date, 'WW') as week_name"
     
     sql = f"""
     SELECT 
         EXTRACT(YEAR FROM order_date) as year,
         {date_part} as {date_label},
+        {date_name},
         COUNT(*) as order_count,
         SUM(grand_total) as total_value,
         AVG(grand_total) as avg_order_value,
@@ -185,7 +189,7 @@ def get_procurement_trends(from_dt: date, to_dt: date, group_by: str = "month") 
         COUNT(CASE WHEN status = 'Received' THEN 1 END) * 100.0 / NULLIF(COUNT(*), 0) as completion_rate
     FROM procurement_orders
     WHERE order_date BETWEEN :from_dt AND :to_dt
-    GROUP BY EXTRACT(YEAR FROM order_date), {date_part}
+    GROUP BY EXTRACT(YEAR FROM order_date), {date_part}, {date_name.split(' as ')[0]}
     ORDER BY year, {date_label}
     """
     

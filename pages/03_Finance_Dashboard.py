@@ -302,7 +302,7 @@ try:
     # Vendor Analysis
     st.markdown('<div class="section-header">Vendor Spending Analysis</div>', unsafe_allow_html=True)
     
-    vendor_data = get_vendor_analysis(from_date, to_date)
+    vendor_data = get_vendor_analysis(from_date, to_date, dept_id)
     if not empty_state(vendor_data):
         st.plotly_chart(
             vendor_spending_chart(vendor_data),

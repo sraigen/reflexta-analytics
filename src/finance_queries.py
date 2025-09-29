@@ -258,12 +258,18 @@ def get_pending_transactions() -> pd.DataFrame:
 
 
 @st.cache_data(ttl=60, show_spinner=False)
-def get_vendor_analysis(from_dt: date, to_dt: date) -> pd.DataFrame:
+def get_vendor_analysis(from_dt: date, to_dt: date, dept_id: Optional[int] = None) -> pd.DataFrame:
     """Get vendor spending analysis."""
     
-    sql = """
+    params = {"from_dt": from_dt, "to_dt": to_dt}
+    where_dept = ""
+    if dept_id:
+        where_dept = " AND dept_id = :dept_id"
+        params["dept_id"] = dept_id
+    
+    sql = f"""
     SELECT 
-        vendor_name,
+        COALESCE(vendor_name, 'Unknown Vendor') as vendor_name,
         COUNT(*) as transaction_count,
         SUM(amount) as total_amount,
         AVG(amount) as avg_amount,
@@ -273,10 +279,10 @@ def get_vendor_analysis(from_dt: date, to_dt: date) -> pd.DataFrame:
     FROM finance_transactions
     WHERE transaction_date BETWEEN :from_dt AND :to_dt
         AND status = 'Completed'
-        AND vendor_name IS NOT NULL
+        {where_dept}
     GROUP BY vendor_name
     ORDER BY total_amount DESC
     """
     
     conn = get_conn()
-    return conn.query(sql, params={"from_dt": from_dt, "to_dt": to_dt})
+    return conn.query(sql, params=params)

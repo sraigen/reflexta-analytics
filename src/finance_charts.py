@@ -223,36 +223,39 @@ def cash_flow_chart(df: pd.DataFrame) -> go.Figure:
     if df.empty:
         return go.Figure()
     
-    # Calculate cumulative cash flow
-    df_sorted = df.sort_values('month')
-    df_sorted['cumulative_flow'] = df_sorted['total_amount'].cumsum()
-    
+    # Create a simple bar chart showing department spending
     fig = go.Figure()
     
-    # Add monthly cash flow
+    # Add department spending
     fig.add_trace(go.Bar(
-        name='Monthly Flow',
-        x=df_sorted['month'],
-        y=df_sorted['total_amount'],
-        marker_color='lightblue'
+        name='Total Spent',
+        x=df['dept_name'],
+        y=df['total_spent'],
+        marker_color='lightblue',
+        text=df['total_spent'],
+        texttemplate='$%{text:,.0f}',
+        textposition='auto'
     ))
     
-    # Add cumulative line
-    fig.add_trace(go.Scatter(
-        name='Cumulative Flow',
-        x=df_sorted['month'],
-        y=df_sorted['cumulative_flow'],
-        mode='lines+markers',
-        line=dict(color='red', width=3),
-        yaxis='y2'
+    # Add budget allocation
+    fig.add_trace(go.Bar(
+        name='Budget Allocation',
+        x=df['dept_name'],
+        y=df['budget_allocation'],
+        marker_color='lightgray',
+        opacity=0.7,
+        text=df['budget_allocation'],
+        texttemplate='$%{text:,.0f}',
+        textposition='auto'
     ))
     
     fig.update_layout(
-        title="Cash Flow Analysis",
-        xaxis_title="Month",
-        yaxis_title="Monthly Amount ($)",
-        yaxis2=dict(title="Cumulative Amount ($)", overlaying="y", side="right"),
-        height=500
+        title="Department Spending vs Budget Allocation",
+        xaxis_title="Department",
+        yaxis_title="Amount ($)",
+        barmode='group',
+        height=500,
+        showlegend=True
     )
     
     return fig
