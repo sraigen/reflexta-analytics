@@ -309,41 +309,52 @@ def render_popup_chat():
     
     # Popup chat interface
     if st.session_state.popup_chat_open:
+        # Chat header
         st.markdown("""
-        <div class="popup-chat-container">
-            <div class="popup-chat-header">
-                <button class="popup-chat-close" onclick="this.parentElement.parentElement.style.display='none'">×</button>
-                <h3>🤖 AI Assistant</h3>
-                <p>Your Analytics Companion</p>
-            </div>
-            
-            <div class="popup-chat-messages">
+        <div style="background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 25%, #16213e 50%, #0f3460 75%, #533483 100%); 
+                    color: white; padding: 1.5rem; text-align: center; border-radius: 12px; 
+                    margin-bottom: 1rem; box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);">
+            <h3 style="margin: 0; font-size: 1.3rem; font-weight: 700;">🤖 AI Assistant</h3>
+            <p style="margin: 0.5rem 0 0 0; font-size: 0.9rem; opacity: 0.9;">Your Analytics Companion</p>
+        </div>
         """, unsafe_allow_html=True)
         
         # Display chat history
-        for message in st.session_state.popup_chat_history:
-            message_class = "user" if message['type'] == 'user' else "ai"
-            st.markdown(f"""
-            <div class="popup-chat-message {message_class}">
-                <strong>{'You' if message['type'] == 'user' else 'AI'}:</strong> {message['content']}
-            </div>
-            """, unsafe_allow_html=True)
-        
-        st.markdown("</div>", unsafe_allow_html=True)
+        if st.session_state.popup_chat_history:
+            st.markdown("**💬 Chat History:**")
+            for message in st.session_state.popup_chat_history:
+                if message['type'] == 'user':
+                    st.markdown(f"""
+                    <div style="background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); 
+                                color: white; padding: 0.8rem 1rem; border-radius: 12px; 
+                                margin: 0.5rem 0; text-align: right; max-width: 85%; margin-left: auto;">
+                        <strong>You:</strong> {message['content']}
+                    </div>
+                    """, unsafe_allow_html=True)
+                else:
+                    st.markdown(f"""
+                    <div style="background: linear-gradient(135deg, #ffffff 0%, #f1f5f9 100%); 
+                                color: #1e293b; padding: 0.8rem 1rem; border-radius: 12px; 
+                                margin: 0.5rem 0; border: 1px solid rgba(148, 163, 184, 0.2); 
+                                max-width: 85%; margin-right: auto;">
+                        <strong>AI:</strong> {message['content']}
+                    </div>
+                    """, unsafe_allow_html=True)
+        else:
+            st.info("💡 Start a conversation with the AI Assistant!")
         
         # Chat input
-        col1, col2 = st.columns([3, 1])
+        user_input = st.text_input(
+            "Ask me anything about the dashboard...",
+            placeholder="e.g., What does 'Budget Utilization' mean?",
+            key="popup_chat_input"
+        )
+        
+        # Action buttons
+        col1, col2, col3 = st.columns([2, 1, 1])
         
         with col1:
-            user_input = st.text_input(
-                "Ask me anything...",
-                placeholder="e.g., What does 'Budget Utilization' mean?",
-                key="popup_chat_input",
-                label_visibility="collapsed"
-            )
-        
-        with col2:
-            if st.button("Send", key="popup_send_btn", use_container_width=True):
+            if st.button("💬 Ask AI", key="popup_send_btn", use_container_width=True):
                 if user_input and user_input.strip():
                     # Add user message
                     st.session_state.popup_chat_history.append({
@@ -370,16 +381,15 @@ def render_popup_chat():
                         st.error("AI Assistant not available")
                     
                     st.rerun()
+                else:
+                    st.warning("Please enter a question!")
         
-        # Action buttons
-        col1, col2 = st.columns(2)
-        
-        with col1:
+        with col2:
             if st.button("🗑️ Clear", key="popup_clear_btn", use_container_width=True):
                 st.session_state.popup_chat_history = []
                 st.rerun()
         
-        with col2:
+        with col3:
             if st.button("❌ Close", key="popup_close_btn", use_container_width=True):
                 st.session_state.popup_chat_open = False
                 st.rerun()
@@ -414,8 +424,8 @@ def render_popup_chat():
                         st.error(f"Error: {str(e)}")
                     
                     st.rerun()
-        
-        st.markdown("</div>", unsafe_allow_html=True)
+        else:
+            st.warning("AI Assistant not available. Please check your API configuration.")
 
 
 def render_chat_toggle():
