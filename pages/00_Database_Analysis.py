@@ -11,17 +11,8 @@ from typing import Optional, Any
 # Import database and query functions
 from src.db import get_conn, health_check
 from src.ui import empty_state
-from src.auth import UserAuth, require_auth, require_permission
-from src.auth_ui import render_auth_guard, render_auth_navbar
 
 st.set_page_config(page_title="Database Analysis", layout="wide")
-
-# Authentication guard
-if not render_auth_guard():
-    st.stop()
-
-# Render authentication navbar
-render_auth_navbar()
 
 # Professional CSS for Database Analysis
 st.markdown("""

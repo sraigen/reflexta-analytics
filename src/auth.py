@@ -1,350 +1,367 @@
 #!/usr/bin/env python3
 """
-Authentication System for Reflexta Analytics Platform
-Comprehensive user authentication with login, registration, and session management.
+Authentication and User Management for Reflexta Analytics Platform
+Secure user authentication with role-based access control.
 """
-
-from __future__ import annotations
 
 import hashlib
 import secrets
-import streamlit as st
+import uuid
 from datetime import datetime, timedelta
-from typing import Optional, Dict, Any, List
-import pandas as pd
-from .db import get_conn
+from typing import Any, Dict, List, Optional
+
+import streamlit as st
+from src.db import get_conn
 
 
-class UserAuth:
-    """User authentication and session management."""
+class AuthManager:
+    """Authentication manager for user login, sessions, and permissions."""
     
     def __init__(self):
-        self.session_timeout = 24 * 60 * 60  # 24 hours in seconds
-        self.initialize_session()
-    
-    def initialize_session(self) -> None:
-        """Initialize authentication session state."""
-        if 'auth' not in st.session_state:
-            st.session_state.auth = {
-                'is_authenticated': False,
-                'user_id': None,
-                'username': None,
-                'email': None,
-                'role': None,
-                'login_time': None,
-                'last_activity': None
-            }
+        """Initialize the authentication manager."""
+        self.session_timeout = timedelta(hours=8)  # 8 hour session timeout
     
     def hash_password(self, password: str) -> str:
-        """Hash password using SHA-256 with salt."""
-        salt = secrets.token_hex(16)
-        password_hash = hashlib.sha256((password + salt).encode()).hexdigest()
-        return f"{salt}:{password_hash}"
-    
-    def verify_password(self, password: str, stored_hash: str) -> bool:
-        """Verify password against stored hash."""
+        """Hash a password using bcrypt."""
         try:
-            salt, password_hash = stored_hash.split(':')
-            computed_hash = hashlib.sha256((password + salt).encode()).hexdigest()
-            return computed_hash == password_hash
-        except ValueError:
+            import bcrypt
+            salt = bcrypt.gensalt()
+            return bcrypt.hashpw(password.encode('utf-8'), salt).decode('utf-8')
+        except ImportError:
+            # Fallback to hashlib if bcrypt is not available
+            return hashlib.sha256(password.encode()).hexdigest()
+    
+    def verify_password(self, password: str, hashed: str) -> bool:
+        """Verify a password against its hash."""
+        try:
+            import bcrypt
+            return bcrypt.checkpw(password.encode('utf-8'), hashed.encode('utf-8'))
+        except ImportError:
+            # Fallback to hashlib if bcrypt is not available
+            return hashlib.sha256(password.encode()).hexdigest() == hashed
+    
+    def authenticate_user(self, username: str, password: str) -> Optional[Dict[str, Any]]:
+        """Authenticate a user with username and password."""
+        try:
+            conn = get_conn()
+            
+            # Get user data using Streamlit connection API
+            query = """
+                SELECT u.user_id, u.username, u.email, u.password_hash, u.first_name, u.last_name,
+                       u.is_active, u.is_verified, u.role_id, u.department_id,
+                       r.role_name, r.permissions,
+                       d.dept_name as department_name
+                FROM users u
+                JOIN user_roles r ON u.role_id = r.role_id
+                LEFT JOIN finance_departments d ON u.department_id = d.dept_id
+                WHERE u.username = %(username)s AND u.is_active = TRUE
+            """
+            
+            user_df = conn.query(query, params={"username": username})
+            
+            if user_df.empty:
+                return None
+            
+            user_data = user_df.iloc[0].to_dict()
+            
+            if self.verify_password(password, user_data['password_hash']):
+                # Create session
+                session_id = self.create_session(user_data['user_id'])
+                
+                # Update last login
+                conn.query("""
+                    UPDATE users 
+                    SET last_login = CURRENT_TIMESTAMP
+                    WHERE user_id = %(user_id)s
+                """, params={"user_id": user_data['user_id']})
+                
+                # Return user data without password
+                user_data['session_id'] = session_id
+                del user_data['password_hash']
+                
+                return user_data
+            
+            return None
+            
+        except Exception as e:
+            st.error(f"Authentication error: {str(e)}")
+            return None
+    
+    def create_session(self, user_id: int) -> str:
+        """Create a new session for a user."""
+        try:
+            conn = get_conn()
+            
+            # Generate session ID
+            session_id = str(uuid.uuid4())
+            
+            # Get client IP (simplified for Streamlit)
+            ip_address = "127.0.0.1"  # Default for local development
+            
+            # Create session record
+            conn.query("""
+                INSERT INTO user_sessions (session_id, user_id, ip_address, expires_at, is_active)
+                VALUES (%(session_id)s, %(user_id)s, %(ip_address)s, %(expires_at)s, TRUE)
+            """, params={
+                "session_id": session_id,
+                "user_id": user_id,
+                "ip_address": ip_address,
+                "expires_at": datetime.now() + self.session_timeout
+            })
+            
+            return session_id
+            
+        except Exception as e:
+            st.error(f"Error creating session: {str(e)}")
+            return None
+    
+    def validate_session(self, session_id: str) -> Optional[Dict[str, Any]]:
+        """Validate a session and return user data if valid."""
+        try:
+            conn = get_conn()
+            
+            # Check session validity
+            query = """
+                SELECT s.session_id, s.user_id, s.expires_at, s.is_active,
+                       u.username, u.email, u.first_name, u.last_name, u.is_active as user_active,
+                       r.role_name, r.permissions,
+                       d.dept_name as department_name
+                FROM user_sessions s
+                JOIN users u ON s.user_id = u.user_id
+                JOIN user_roles r ON u.role_id = r.role_id
+                LEFT JOIN finance_departments d ON u.department_id = d.dept_id
+                WHERE s.session_id = %(session_id)s 
+                AND s.is_active = TRUE 
+                AND s.expires_at > CURRENT_TIMESTAMP
+                AND u.is_active = TRUE
+            """
+            
+            session_df = conn.query(query, params={"session_id": session_id})
+            
+            if session_df.empty:
+                return None
+            
+            session_data = session_df.iloc[0].to_dict()
+            
+            # Update last activity
+            conn.query("""
+                UPDATE user_sessions 
+                SET last_activity = CURRENT_TIMESTAMP
+                WHERE session_id = %(session_id)s
+            """, params={"session_id": session_id})
+            
+            return session_data
+            
+        except Exception as e:
+            st.error(f"Session validation error: {str(e)}")
+            return None
+    
+    def logout_user(self, session_id: str) -> bool:
+        """Logout a user by invalidating their session."""
+        try:
+            conn = get_conn()
+            
+            conn.query("""
+                UPDATE user_sessions 
+                SET is_active = FALSE
+                WHERE session_id = %(session_id)s
+            """, params={"session_id": session_id})
+            
+            return True
+            
+        except Exception as e:
+            st.error(f"Logout error: {str(e)}")
             return False
     
-    def create_user(self, username: str, email: str, password: str, role: str = 'user') -> Dict[str, Any]:
-        """Create a new user account."""
+    def check_permission(self, user_id: int, permission: str) -> bool:
+        """Check if a user has a specific permission."""
         try:
             conn = get_conn()
             
-            # Check if user already exists
-            existing_user = conn.query(
-                "SELECT id FROM users WHERE username = :username OR email = :email",
-                params={"username": username, "email": email}
-            )
+            query = """
+                SELECT r.permissions
+                FROM users u
+                JOIN user_roles r ON u.role_id = r.role_id
+                WHERE u.user_id = %(user_id)s AND u.is_active = TRUE
+            """
             
-            if not existing_user.empty:
-                return {'success': False, 'message': 'Username or email already exists'}
+            user_df = conn.query(query, params={"user_id": user_id})
             
-            # Hash password
-            password_hash = self.hash_password(password)
+            if user_df.empty:
+                return False
             
-            # Insert new user
-            result = conn.query("""
-                INSERT INTO users (username, email, password_hash, role, created_at, is_active)
-                VALUES (:username, :email, :password_hash, :role, :created_at, :is_active)
-                RETURNING id
-            """, params={
-                "username": username, 
-                "email": email, 
-                "password_hash": password_hash, 
-                "role": role, 
-                "created_at": datetime.now(), 
-                "is_active": True
-            })
+            permissions = user_df.iloc[0]['permissions']
             
-            if not result.empty:
-                user_id = result.iloc[0]['id']
-                return {
-                    'success': True, 
-                    'message': 'User created successfully',
-                    'user_id': user_id
-                }
-            else:
-                return {'success': False, 'message': 'Failed to create user'}
+            if isinstance(permissions, dict):
+                return permissions.get(permission, False)
+            
+            return False
             
         except Exception as e:
-            return {'success': False, 'message': f'Error creating user: {str(e)}'}
+            st.error(f"Permission check error: {str(e)}")
+            return False
     
-    def authenticate_user(self, username: str, password: str) -> Dict[str, Any]:
-        """Authenticate user login."""
+    def get_user_permissions(self, user_id: int) -> Dict[str, bool]:
+        """Get all permissions for a user."""
         try:
             conn = get_conn()
             
-            # Get user data
-            user_data = conn.query("""
-                SELECT id, username, email, password_hash, role, is_active, last_login
-                FROM users 
-                WHERE username = :username OR email = :email
-            """, params={"username": username, "email": username})
+            query = """
+                SELECT r.permissions
+                FROM users u
+                JOIN user_roles r ON u.role_id = r.role_id
+                WHERE u.user_id = %(user_id)s AND u.is_active = TRUE
+            """
             
-            if user_data.empty:
-                return {'success': False, 'message': 'Invalid username or password'}
+            user_df = conn.query(query, params={"user_id": user_id})
             
-            user_row = user_data.iloc[0]
-            user_id = user_row['id']
-            db_username = user_row['username']
-            email = user_row['email']
-            password_hash = user_row['password_hash']
-            role = user_row['role']
-            is_active = user_row['is_active']
+            if user_df.empty:
+                return {}
             
-            # Check if user is active
-            if not is_active:
-                return {'success': False, 'message': 'Account is deactivated'}
+            permissions = user_df.iloc[0]['permissions']
             
-            # Verify password
-            if not self.verify_password(password, password_hash):
-                return {'success': False, 'message': 'Invalid username or password'}
+            if isinstance(permissions, dict):
+                return permissions
             
-            # Update last login
-            conn.query(
-                "UPDATE users SET last_login = :last_login WHERE id = :user_id",
-                params={"last_login": datetime.now(), "user_id": user_id}
-            )
-            
-            # Set session data
-            st.session_state.auth.update({
-                'is_authenticated': True,
-                'user_id': user_id,
-                'username': db_username,
-                'email': email,
-                'role': role,
-                'login_time': datetime.now(),
-                'last_activity': datetime.now()
-            })
-            
-            return {
-                'success': True,
-                'message': 'Login successful',
-                'user_data': {
-                    'user_id': user_id,
-                    'username': db_username,
-                    'email': email,
-                    'role': role
-                }
-            }
+            return {}
             
         except Exception as e:
-            return {'success': False, 'message': f'Authentication error: {str(e)}'}
+            st.error(f"Error getting user permissions: {str(e)}")
+            return {}
     
-    def logout_user(self) -> None:
-        """Logout current user."""
-        st.session_state.auth.update({
-            'is_authenticated': False,
-            'user_id': None,
-            'username': None,
-            'email': None,
-            'role': None,
-            'login_time': None,
-            'last_activity': None
-        })
-        st.rerun()
+    def cleanup_expired_sessions(self) -> int:
+        """Clean up expired sessions and return count of cleaned sessions."""
+        try:
+            conn = get_conn()
+            
+            # Get count of expired sessions
+            count_df = conn.query("""
+                SELECT COUNT(*) as count
+                FROM user_sessions
+                WHERE expires_at < CURRENT_TIMESTAMP OR is_active = FALSE
+            """)
+            
+            count = count_df.iloc[0]['count'] if not count_df.empty else 0
+            
+            # Clean up expired sessions
+            conn.query("""
+                DELETE FROM user_sessions
+                WHERE expires_at < CURRENT_TIMESTAMP OR is_active = FALSE
+            """)
+            
+            return count
+            
+        except Exception as e:
+            st.error(f"Session cleanup error: {str(e)}")
+            return 0
+
+
+# Global auth manager instance
+_auth_manager = None
+
+
+def get_auth_manager() -> AuthManager:
+    """Get the global authentication manager instance."""
+    global _auth_manager
+    if _auth_manager is None:
+        _auth_manager = AuthManager()
+    return _auth_manager
+
+
+def is_authenticated() -> bool:
+    """Check if the current user is authenticated."""
+    if 'authenticated' not in st.session_state:
+        return False
     
-    def is_authenticated(self) -> bool:
-        """Check if user is authenticated."""
-        return st.session_state.auth.get('is_authenticated', False)
+    if not st.session_state.get('authenticated', False):
+        return False
     
-    def get_current_user(self) -> Optional[Dict[str, Any]]:
-        """Get current user data."""
-        if self.is_authenticated():
-            return {
-                'user_id': st.session_state.auth.get('user_id'),
-                'username': st.session_state.auth.get('username'),
-                'email': st.session_state.auth.get('email'),
-                'role': st.session_state.auth.get('role'),
-                'login_time': st.session_state.auth.get('login_time'),
-                'last_activity': st.session_state.auth.get('last_activity')
-            }
+    # Validate session
+    session_id = st.session_state.get('session_id')
+    if not session_id:
+        return False
+    
+    auth_manager = get_auth_manager()
+    user_data = auth_manager.validate_session(session_id)
+    
+    if user_data:
+        # Update session state with fresh user data
+        st.session_state['user_data'] = user_data
+        return True
+    
+    # Session is invalid, clear authentication
+    st.session_state.clear()
+    return False
+
+
+def get_current_user() -> Optional[Dict[str, Any]]:
+    """Get the current authenticated user data."""
+    if not is_authenticated():
         return None
     
-    def check_session_timeout(self) -> bool:
-        """Check if session has timed out."""
-        if not self.is_authenticated():
-            return False
-        
-        last_activity = st.session_state.auth.get('last_activity')
-        if not last_activity:
-            return True
-        
-        time_diff = (datetime.now() - last_activity).total_seconds()
-        return time_diff > self.session_timeout
-    
-    def update_activity(self) -> None:
-        """Update last activity timestamp."""
-        if self.is_authenticated():
-            st.session_state.auth['last_activity'] = datetime.now()
-    
-    def has_role(self, required_role: str) -> bool:
-        """Check if user has required role."""
-        if not self.is_authenticated():
-            return False
-        
-        user_role = st.session_state.auth.get('role')
-        role_hierarchy = {
-            'admin': ['admin', 'manager', 'user'],
-            'manager': ['manager', 'user'],
-            'user': ['user']
-        }
-        
-        return required_role in role_hierarchy.get(user_role, [])
-    
-    def get_user_permissions(self) -> List[str]:
-        """Get user permissions based on role."""
-        role = st.session_state.auth.get('role', 'user')
-        
-        permissions = {
-            'admin': [
-                'view_dashboard', 'view_finance', 'view_procurement', 'view_analytics',
-                'view_database', 'manage_users', 'view_reports', 'export_data',
-                'admin_settings', 'system_config'
-            ],
-            'manager': [
-                'view_dashboard', 'view_finance', 'view_procurement', 'view_analytics',
-                'view_database', 'view_reports', 'export_data'
-            ],
-            'user': [
-                'view_dashboard', 'view_finance', 'view_procurement', 'view_analytics'
-            ]
-        }
-        
-        return permissions.get(role, permissions['user'])
-
-
-def create_users_table() -> None:
-    """Create users table if it doesn't exist."""
-    try:
-        conn = get_conn()
-        
-        # Create users table
-        conn.query("""
-            CREATE TABLE IF NOT EXISTS users (
-                id SERIAL PRIMARY KEY,
-                username VARCHAR(50) UNIQUE NOT NULL,
-                email VARCHAR(100) UNIQUE NOT NULL,
-                password_hash VARCHAR(255) NOT NULL,
-                role VARCHAR(20) DEFAULT 'user',
-                is_active BOOLEAN DEFAULT TRUE,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                last_login TIMESTAMP,
-                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
-        """)
-        
-        # Check if any users exist
-        try:
-            user_count_result = conn.query("SELECT COUNT(*) as count FROM users")
-            user_count = user_count_result.iloc[0]['count'] if not user_count_result.empty else 0
-        except Exception:
-            # If query fails, assume table is empty
-            user_count = 0
-        
-        # Create default admin user if no users exist
-        if user_count == 0:
-            auth = UserAuth()
-            password_hash = auth.hash_password('admin123')
-            conn.query("""
-                INSERT INTO users (username, email, password_hash, role)
-                VALUES (:username, :email, :password_hash, :role)
-            """, params={
-                'username': 'admin', 
-                'email': 'admin@reflexta.com', 
-                'password_hash': password_hash, 
-                'role': 'admin'
-            })
-        
-    except Exception as e:
-        st.warning(f"Authentication setup issue: {str(e)}")
-        st.info("💡 The users table will be created when you first try to log in.")
-
-
-def require_auth(func):
-    """Decorator to require authentication for functions."""
-    def wrapper(*args, **kwargs):
-        auth = UserAuth()
-        
-        # Check if user is authenticated
-        if not auth.is_authenticated():
-            st.error("🔒 Authentication required. Please log in to access this feature.")
-            st.stop()
-        
-        # Check session timeout
-        if auth.check_session_timeout():
-            st.error("⏰ Session expired. Please log in again.")
-            auth.logout_user()
-            st.stop()
-        
-        # Update activity
-        auth.update_activity()
-        
-        return func(*args, **kwargs)
-    return wrapper
-
-
-def require_role(required_role: str):
-    """Decorator to require specific role for functions."""
-    def decorator(func):
-        def wrapper(*args, **kwargs):
-            auth = UserAuth()
-            
-            if not auth.is_authenticated():
-                st.error("🔒 Authentication required.")
-                st.stop()
-            
-            if not auth.has_role(required_role):
-                st.error(f"🚫 Access denied. {required_role.title()} role required.")
-                st.stop()
-            
-            auth.update_activity()
-            return func(*args, **kwargs)
-        return wrapper
-    return decorator
+    return st.session_state.get('user_data')
 
 
 def require_permission(permission: str):
-    """Decorator to require specific permission for functions."""
+    """Decorator to require a specific permission for a function."""
     def decorator(func):
         def wrapper(*args, **kwargs):
-            auth = UserAuth()
+            if not is_authenticated():
+                st.error("🔒 Authentication required")
+                st.info("Please log in to access this feature.")
+                return
             
-            if not auth.is_authenticated():
-                st.error("🔒 Authentication required.")
-                st.stop()
+            current_user = get_current_user()
+            if not current_user:
+                st.error("🔒 User session not found")
+                return
             
-            user_permissions = auth.get_user_permissions()
-            if permission not in user_permissions:
-                st.error(f"🚫 Access denied. {permission.replace('_', ' ').title()} permission required.")
-                st.stop()
+            auth_manager = get_auth_manager()
+            if not auth_manager.check_permission(current_user['user_id'], permission):
+                st.error(f"🚫 Access denied. You don't have permission for: {permission}")
+                st.info("Contact your administrator for access.")
+                return
             
-            auth.update_activity()
             return func(*args, **kwargs)
         return wrapper
     return decorator
+
+
+def has_permission(permission: str) -> bool:
+    """Check if the current user has a specific permission."""
+    if not is_authenticated():
+        return False
+    
+    current_user = get_current_user()
+    if not current_user:
+        return False
+    
+    auth_manager = get_auth_manager()
+    return auth_manager.check_permission(current_user['user_id'], permission)
+
+
+def get_user_role() -> Optional[str]:
+    """Get the current user's role."""
+    current_user = get_current_user()
+    if current_user:
+        return current_user.get('role_name')
+    return None
+
+
+def is_admin() -> bool:
+    """Check if the current user is an administrator."""
+    return get_user_role() == 'Administrator'
+
+
+def is_manager() -> bool:
+    """Check if the current user is a manager."""
+    role = get_user_role()
+    return role in ['Administrator', 'Manager']
+
+
+def get_user_department() -> Optional[str]:
+    """Get the current user's department."""
+    current_user = get_current_user()
+    if current_user:
+        return current_user.get('department_name')
+    return None

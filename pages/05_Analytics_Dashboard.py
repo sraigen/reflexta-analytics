@@ -13,17 +13,8 @@ from src.db import get_conn, health_check
 from src.finance_queries import get_finance_kpis, get_finance_monthly_trends, get_vendor_analysis
 from src.procurement_queries import get_procurement_kpis, get_procurement_trends, get_vendor_performance
 from src.ui import empty_state
-from src.auth import UserAuth, require_auth, require_permission
-from src.auth_ui import render_auth_guard, render_auth_navbar
 
 st.set_page_config(page_title="Analytics Dashboard", layout="wide")
-
-# Authentication guard
-if not render_auth_guard():
-    st.stop()
-
-# Render authentication navbar
-render_auth_navbar()
 
 # Professional CSS for Analytics Dashboard
 st.markdown("""

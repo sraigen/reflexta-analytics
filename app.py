@@ -19,8 +19,7 @@ from src.procurement_queries import get_procurement_kpis, get_procurement_summar
 from src.ui import kpi_row, section_header, empty_state
 from src.sidebar_ai_chat import render_sidebar_ai_chat
 from src.enhanced_ai_assistant import get_enhanced_ai_assistant
-from src.auth import UserAuth, create_users_table, require_auth
-from src.auth_ui import render_auth_guard, render_auth_navbar
+from src.auth import get_auth_manager, is_authenticated, get_current_user
 
 # Page configuration
 st.set_page_config(
@@ -30,15 +29,35 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Initialize authentication
-auth = UserAuth()
+# Authentication Check
+if not is_authenticated():
+    st.error("🔒 Authentication Required")
+    st.info("Please log in to access the Reflexta Analytics Platform.")
+    
+    col1, col2, col3 = st.columns([1, 2, 1])
+    with col2:
+        if st.button("🔐 Go to Login", use_container_width=True, type="primary"):
+            st.switch_page("pages/00_Login.py")
+    
+    st.stop()
 
-# Try to create users table, but don't fail if it doesn't work
-try:
-    create_users_table()
-except Exception as e:
-    # Don't show error to user, just continue
-    pass
+# Get current user
+current_user = get_current_user()
+if current_user:
+    st.sidebar.markdown(f"👤 **{current_user['first_name']} {current_user['last_name']}**")
+    st.sidebar.markdown(f"🔐 **{current_user['role_name']}**")
+    st.sidebar.markdown(f"🏢 **{current_user.get('department_name', 'N/A')}**")
+    
+    if st.sidebar.button("🚪 Logout", use_container_width=True):
+        # Logout user
+        auth_manager = get_auth_manager()
+        session_id = st.session_state.get('session_id')
+        if session_id:
+            auth_manager.logout_user(session_id)
+        
+        # Clear session state
+        st.session_state.clear()
+        st.rerun()
 
 # Initialize AI assistant
 if "ai_assistant" not in st.session_state:
@@ -845,13 +864,6 @@ with st.sidebar:
         <p>💡 Click "Open AI Assistant" for intelligent help with dashboards, KPIs, and data interpretation.</p>
     </div>
     """, unsafe_allow_html=True)
-
-# Authentication guard
-if not render_auth_guard():
-    st.stop()
-
-# Render authentication navbar
-render_auth_navbar()
 
 if not health_check():
     st.error("Database connection failed. Please check your connection settings.")
