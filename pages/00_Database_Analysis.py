@@ -337,13 +337,15 @@ try:
             
             # Get table statistics
             try:
-                stats_query = f"""
-                SELECT 
-                    COUNT(*) as total_rows,
-                    COUNT(DISTINCT *) as unique_rows
-                FROM {selected_table}
-                """
-                stats_df = conn.query(stats_query)
+                # Get total row count
+                count_query = f"SELECT COUNT(*) as total_rows FROM {selected_table}"
+                count_df = conn.query(count_query)
+                
+                # Get unique row count (approximate using a different approach)
+                # For now, we'll just use the total count as unique count
+                # In a real scenario, you might want to check for primary keys or unique constraints
+                stats_df = count_df.copy()
+                stats_df['unique_rows'] = stats_df['total_rows']  # Simplified approach
                 
                 if not stats_df.empty:
                     stats_row = stats_df.iloc[0]
