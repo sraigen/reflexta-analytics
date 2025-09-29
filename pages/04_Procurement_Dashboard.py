@@ -30,8 +30,13 @@ from src.ui import empty_state
 
 st.set_page_config(page_title="Procurement Dashboard", layout="wide")
 
-# Procurement Dashboard Filters
-st.markdown("### Procurement Filters")
+# Procurement Dashboard Filters - Sticky
+st.markdown("""
+<div style="position: sticky; top: 0; background: white; z-index: 100; padding: 1rem 0; border-bottom: 2px solid #e0e0e0; margin-bottom: 1rem;">
+    <h3>Procurement Filters</h3>
+</div>
+""", unsafe_allow_html=True)
+
 col1, col2, col3, col4 = st.columns(4)
 
 with col1:

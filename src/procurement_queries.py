@@ -212,10 +212,16 @@ def get_procurement_trends(from_dt: date, to_dt: date, dept_id: Optional[int] = 
 
 
 @st.cache_data(ttl=60, show_spinner=False)
-def get_pending_orders() -> pd.DataFrame:
+def get_pending_orders(from_dt: date, to_dt: date, dept_id: Optional[int] = None) -> pd.DataFrame:
     """Get pending orders requiring attention."""
     
-    sql = """
+    params = {"from_dt": from_dt, "to_dt": to_dt}
+    where_dept = ""
+    if dept_id:
+        where_dept = " AND po.dept_id = :dept_id"
+        params["dept_id"] = dept_id
+    
+    sql = f"""
     SELECT 
         po.order_id,
         po.order_number,
@@ -233,7 +239,9 @@ def get_pending_orders() -> pd.DataFrame:
     JOIN procurement_vendors v ON po.vendor_id = v.vendor_id
     JOIN procurement_categories c ON po.category_id = c.category_id
     JOIN finance_departments d ON po.dept_id = d.dept_id
-    WHERE po.status IN ('Draft', 'Submitted', 'Approved', 'Ordered')
+    WHERE po.order_date BETWEEN :from_dt AND :to_dt
+        AND po.status IN ('Draft', 'Submitted', 'Approved', 'Ordered')
+        {where_dept}
     ORDER BY 
         CASE po.priority 
             WHEN 'Urgent' THEN 1 
@@ -245,7 +253,7 @@ def get_pending_orders() -> pd.DataFrame:
     """
     
     conn = get_conn()
-    return conn.query(sql)
+    return conn.query(sql, params=params)
 
 
 @st.cache_data(ttl=60, show_spinner=False)
@@ -264,15 +272,19 @@ def get_delivery_performance(from_dt: date, to_dt: date, dept_id: Optional[int] 
         COUNT(po.order_id) as total_orders,
         COUNT(CASE WHEN po.status = 'Received' THEN 1 END) as delivered_orders,
         COUNT(CASE WHEN po.status = 'Received' THEN 1 END) as on_time_deliveries,
-        0 as late_deliveries,
+        COUNT(CASE WHEN po.status IN ('Draft', 'Submitted', 'Approved', 'Ordered') THEN 1 END) as pending_orders,
         NULL as avg_delivery_delay_days,
-        CASE WHEN COUNT(po.order_id) > 0 THEN 100.0 ELSE 0 END as on_time_percentage
+        CASE 
+            WHEN COUNT(po.order_id) > 0 THEN 
+                ROUND((COUNT(CASE WHEN po.status = 'Received' THEN 1 END) * 100.0 / COUNT(po.order_id)), 2)
+            ELSE 0 
+        END as on_time_percentage
     FROM procurement_orders po
     JOIN procurement_vendors v ON po.vendor_id = v.vendor_id
     WHERE po.order_date BETWEEN :from_dt AND :to_dt
-        AND po.status = 'Received'
         {where_dept}
     GROUP BY v.vendor_id, v.vendor_name
+    HAVING COUNT(po.order_id) > 0
     ORDER BY on_time_percentage DESC
     """
     
