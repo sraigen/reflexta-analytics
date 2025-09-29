@@ -14,9 +14,18 @@ def get_conn() -> Any:
     """Return a Streamlit SQL connection named "sql".
 
     The connection is configured via `[connections.sql]` in `.streamlit/secrets.toml`.
+    For Streamlit Cloud, we force the Supabase URL to avoid localhost issues.
     """
 
-    return st.connection("sql", type="sql")
+    # Force Supabase URL for Streamlit Cloud to avoid localhost connection issues
+    SUPABASE_URL = "postgresql://postgres.vbowznmcdzsgzntnzwfi:Sit%401125@aws-1-ap-south-1.pooler.supabase.com:6543/postgres"
+    
+    try:
+        # Try to use the forced Supabase URL first
+        return st.connection("sql", type="sql", url=SUPABASE_URL)
+    except Exception:
+        # Fallback to secrets-based connection for local development
+        return st.connection("sql", type="sql")
 
 
 def health_check() -> bool:
