@@ -151,7 +151,7 @@ def get_vendor_performance_analysis() -> pd.DataFrame:
             COUNT(CASE WHEN o.status = 'Cancelled' THEN 1 END) as cancelled_orders,
             AVG(CASE 
                 WHEN o.delivery_date IS NOT NULL 
-                THEN EXTRACT(DAYS FROM (o.delivery_date - o.order_date))
+                THEN (o.delivery_date - o.order_date)
                 ELSE NULL 
             END) as avg_delivery_delay_days
         FROM procurement_vendors v
