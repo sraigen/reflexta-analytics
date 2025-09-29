@@ -554,7 +554,7 @@ def render_user_profile() -> None:
             st.rerun()
 
 
-def render_auth_guard() -> None:
+def render_auth_guard() -> bool:
     """Render authentication guard for protected routes."""
     
     auth = UserAuth()

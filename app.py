@@ -32,7 +32,11 @@ st.set_page_config(
 
 # Initialize authentication
 auth = UserAuth()
-create_users_table()
+try:
+    create_users_table()
+except Exception as e:
+    st.warning(f"⚠️ Authentication setup issue: {str(e)}")
+    st.info("💡 Please run the database setup script to create the users table.")
 
 # Initialize AI assistant
 if "ai_assistant" not in st.session_state:

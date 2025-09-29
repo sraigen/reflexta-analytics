@@ -54,61 +54,68 @@ class UserAuth:
         """Create a new user account."""
         try:
             conn = get_conn()
-            cursor = conn.cursor()
             
             # Check if user already exists
-            cursor.execute(
-                "SELECT id FROM users WHERE username = %s OR email = %s",
-                (username, email)
+            existing_user = conn.query(
+                "SELECT id FROM users WHERE username = :username OR email = :email",
+                params={"username": username, "email": email}
             )
-            if cursor.fetchone():
+            
+            if not existing_user.empty:
                 return {'success': False, 'message': 'Username or email already exists'}
             
             # Hash password
             password_hash = self.hash_password(password)
             
             # Insert new user
-            cursor.execute("""
+            result = conn.query("""
                 INSERT INTO users (username, email, password_hash, role, created_at, is_active)
-                VALUES (%s, %s, %s, %s, %s, %s)
+                VALUES (:username, :email, :password_hash, :role, :created_at, :is_active)
                 RETURNING id
-            """, (username, email, password_hash, role, datetime.now(), True))
+            """, params={
+                "username": username, 
+                "email": email, 
+                "password_hash": password_hash, 
+                "role": role, 
+                "created_at": datetime.now(), 
+                "is_active": True
+            })
             
-            user_id = cursor.fetchone()[0]
-            conn.commit()
-            
-            return {
-                'success': True, 
-                'message': 'User created successfully',
-                'user_id': user_id
-            }
+            if not result.empty:
+                user_id = result.iloc[0]['id']
+                return {
+                    'success': True, 
+                    'message': 'User created successfully',
+                    'user_id': user_id
+                }
+            else:
+                return {'success': False, 'message': 'Failed to create user'}
             
         except Exception as e:
             return {'success': False, 'message': f'Error creating user: {str(e)}'}
-        finally:
-            if 'cursor' in locals():
-                cursor.close()
-            if 'conn' in locals():
-                conn.close()
     
     def authenticate_user(self, username: str, password: str) -> Dict[str, Any]:
         """Authenticate user login."""
         try:
             conn = get_conn()
-            cursor = conn.cursor()
             
             # Get user data
-            cursor.execute("""
+            user_data = conn.query("""
                 SELECT id, username, email, password_hash, role, is_active, last_login
                 FROM users 
-                WHERE username = %s OR email = %s
-            """, (username, username))
+                WHERE username = :username OR email = :email
+            """, params={"username": username, "email": username})
             
-            user_data = cursor.fetchone()
-            if not user_data:
+            if user_data.empty:
                 return {'success': False, 'message': 'Invalid username or password'}
             
-            user_id, db_username, email, password_hash, role, is_active, last_login = user_data
+            user_row = user_data.iloc[0]
+            user_id = user_row['id']
+            db_username = user_row['username']
+            email = user_row['email']
+            password_hash = user_row['password_hash']
+            role = user_row['role']
+            is_active = user_row['is_active']
             
             # Check if user is active
             if not is_active:
@@ -119,11 +126,10 @@ class UserAuth:
                 return {'success': False, 'message': 'Invalid username or password'}
             
             # Update last login
-            cursor.execute(
-                "UPDATE users SET last_login = %s WHERE id = %s",
-                (datetime.now(), user_id)
+            conn.query(
+                "UPDATE users SET last_login = :last_login WHERE id = :user_id",
+                params={"last_login": datetime.now(), "user_id": user_id}
             )
-            conn.commit()
             
             # Set session data
             st.session_state.auth.update({
@@ -149,11 +155,6 @@ class UserAuth:
             
         except Exception as e:
             return {'success': False, 'message': f'Authentication error: {str(e)}'}
-        finally:
-            if 'cursor' in locals():
-                cursor.close()
-            if 'conn' in locals():
-                conn.close()
     
     def logout_user(self) -> None:
         """Logout current user."""
@@ -242,9 +243,9 @@ def create_users_table() -> None:
     """Create users table if it doesn't exist."""
     try:
         conn = get_conn()
-        cursor = conn.cursor()
         
-        cursor.execute("""
+        # Create users table
+        conn.query("""
             CREATE TABLE IF NOT EXISTS users (
                 id SERIAL PRIMARY KEY,
                 username VARCHAR(50) UNIQUE NOT NULL,
@@ -258,27 +259,26 @@ def create_users_table() -> None:
             )
         """)
         
-        # Create default admin user if no users exist
-        cursor.execute("SELECT COUNT(*) FROM users")
-        user_count = cursor.fetchone()[0]
+        # Check if any users exist
+        user_count_result = conn.query("SELECT COUNT(*) as count FROM users")
+        user_count = user_count_result.iloc[0]['count'] if not user_count_result.empty else 0
         
+        # Create default admin user if no users exist
         if user_count == 0:
             auth = UserAuth()
             password_hash = auth.hash_password('admin123')
-            cursor.execute("""
+            conn.query("""
                 INSERT INTO users (username, email, password_hash, role)
-                VALUES (%s, %s, %s, %s)
-            """, ('admin', 'admin@reflexta.com', password_hash, 'admin'))
-        
-        conn.commit()
+                VALUES (:username, :email, :password_hash, :role)
+            """, params={
+                'username': 'admin', 
+                'email': 'admin@reflexta.com', 
+                'password_hash': password_hash, 
+                'role': 'admin'
+            })
         
     except Exception as e:
         st.error(f"Error creating users table: {str(e)}")
-    finally:
-        if 'cursor' in locals():
-            cursor.close()
-        if 'conn' in locals():
-            conn.close()
 
 
 def require_auth(func):
