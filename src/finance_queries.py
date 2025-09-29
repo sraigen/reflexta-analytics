@@ -231,10 +231,16 @@ def get_budget_vs_actual(from_dt: date, to_dt: date, dept_id: Optional[int] = No
 
 
 @st.cache_data(ttl=60, show_spinner=False)
-def get_pending_transactions() -> pd.DataFrame:
+def get_pending_transactions(from_dt: date, to_dt: date, dept_id: Optional[int] = None) -> pd.DataFrame:
     """Get pending transactions requiring approval."""
     
-    sql = """
+    params = {"from_dt": from_dt, "to_dt": to_dt}
+    where_dept = ""
+    if dept_id:
+        where_dept = " AND t.dept_id = :dept_id"
+        params["dept_id"] = dept_id
+    
+    sql = f"""
     SELECT 
         t.transaction_id,
         t.transaction_date,
@@ -249,12 +255,14 @@ def get_pending_transactions() -> pd.DataFrame:
     FROM finance_transactions t
     JOIN finance_departments d ON t.dept_id = d.dept_id
     JOIN finance_accounts a ON t.account_id = a.account_id
-    WHERE t.status IN ('Pending', 'Approved')
+    WHERE t.transaction_date BETWEEN :from_dt AND :to_dt
+        AND t.status IN ('Pending', 'Approved')
+        {where_dept}
     ORDER BY t.created_at DESC
     """
     
     conn = get_conn()
-    return conn.query(sql)
+    return conn.query(sql, params=params)
 
 
 @st.cache_data(ttl=60, show_spinner=False)

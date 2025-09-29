@@ -170,14 +170,15 @@ def delivery_performance_chart(df: pd.DataFrame) -> go.Figure:
         opacity=0.7
     ))
     
-    # Add late deliveries
-    fig.add_trace(go.Bar(
-        name='Late',
-        x=df['vendor_name'],
-        y=df['late_deliveries'],
-        marker_color='red',
-        opacity=0.7
-    ))
+    # Add late deliveries (if column exists)
+    if 'late_deliveries' in df.columns:
+        fig.add_trace(go.Bar(
+            name='Late',
+            x=df['vendor_name'],
+            y=df['late_deliveries'],
+            marker_color='red',
+            opacity=0.7
+        ))
     
     fig.update_layout(
         title="Delivery Performance by Vendor",

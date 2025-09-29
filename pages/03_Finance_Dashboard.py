@@ -28,68 +28,43 @@ from src.ui import empty_state
 
 st.set_page_config(page_title="Finance Dashboard", layout="wide")
 
-# Finance Dashboard Filters - Sticky Container
-st.markdown("""
-<style>
-.sticky-filters {
-    position: sticky;
-    top: 0;
-    background: white;
-    z-index: 1000;
-    padding: 1rem;
-    border-bottom: 2px solid #e0e0e0;
-    margin-bottom: 1rem;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-</style>
-""", unsafe_allow_html=True)
-
-with st.container():
-    st.markdown('<div class="sticky-filters">', unsafe_allow_html=True)
+# Finance Dashboard Filters - Sidebar Approach
+with st.sidebar:
+    st.markdown("### 🔧 Finance Filters")
     
-    with st.expander("🔧 Finance Filters - Click to Expand/Collapse", expanded=True):
-        col1, col2, col3, col4 = st.columns(4)
+    from_date = st.date_input(
+        "From Date", 
+        value=dt.date.today() - dt.timedelta(days=30),
+        help="Select start date for analysis"
+    )
 
-        with col1:
-            from_date = st.date_input(
-                "From Date", 
-                value=dt.date.today() - dt.timedelta(days=30),
-                help="Select start date for analysis"
-            )
+    to_date = st.date_input(
+        "To Date", 
+        value=dt.date.today(),
+        help="Select end date for analysis"
+    )
 
-        with col2:
-            to_date = st.date_input(
-                "To Date", 
-                value=dt.date.today(),
-                help="Select end date for analysis"
-            )
+    department = st.selectbox(
+        "Department",
+        options=["All", "Finance", "Procurement", "IT", "HR", "Operations", "Marketing", "Sales", "Legal"],
+        help="Filter by specific department"
+    )
 
-        with col3:
-            department = st.selectbox(
-                "Department",
-                options=["All", "Finance", "Procurement", "IT", "HR", "Operations", "Marketing", "Sales", "Legal"],
-                help="Filter by specific department"
-            )
+    transaction_type = st.selectbox(
+        "Transaction Type",
+        options=["All", "Revenue", "Expense"],
+        help="Filter by transaction type"
+    )
 
-        with col4:
-            transaction_type = st.selectbox(
-                "Transaction Type",
-                options=["All", "Revenue", "Expense"],
-                help="Filter by transaction type"
-            )
+    # Get department ID if specific department is selected
+    dept_id = None
+    if department != "All":
+        dept_mapping = {
+            "Finance": 1, "Procurement": 2, "IT": 3, "HR": 4, "Operations": 5,
+            "Marketing": 6, "Sales": 7, "Legal": 8
+        }
+        dept_id = dept_mapping.get(department)
 
-        # Get department ID if specific department is selected
-        dept_id = None
-        if department != "All":
-            dept_mapping = {
-                "Finance": 1, "Procurement": 2, "IT": 3, "HR": 4, "Operations": 5,
-                "Marketing": 6, "Sales": 7, "Legal": 8
-            }
-            dept_id = dept_mapping.get(department)
-    
-    st.markdown('</div>', unsafe_allow_html=True)
-
-st.markdown("---")
 
 # Professional CSS for Finance Dashboard
 st.markdown("""
