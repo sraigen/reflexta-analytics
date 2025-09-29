@@ -28,16 +28,6 @@ A production-grade data visualization platform built with Python, Streamlit, and
 - **🤖 AI Assistant**: Intelligent chatbot powered by DeepSeek API for dashboard help
 - **📱 Responsive Design**: Works seamlessly on desktop, tablet, and mobile
 
-### 🆕 Latest Developments
-- **🔍 Interactive Drill-Down**: Click on any chart element to see detailed breakdowns
-- **📊 Department Analysis**: Drill-down from department to sub-department to transactions
-- **📅 Monthly Trends**: Click on month points to see daily spending breakdowns
-- **🏪 Vendor Performance**: Click on vendor bars to see their complete order history
-- **📈 Category Breakdown**: Click on category slices to see detailed item analysis
-- **🎯 Cross-Chart Filtering**: Click on one chart to filter all related charts
-- **💡 Smart Hover Effects**: Professional tooltips with detailed information
-- **🎨 Luxury Color Palette**: Sophisticated enterprise-grade color scheme
-
 ## 🏗️ Architecture
 
 ### Technology Stack

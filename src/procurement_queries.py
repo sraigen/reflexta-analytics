@@ -22,7 +22,7 @@ def get_procurement_summary(from_dt: date, to_dt: date, dept_id: Optional[int] =
     params = {"from_dt": from_dt, "to_dt": to_dt}
     where_dept = ""
     if dept_id:
-        where_dept = " AND o.dept_id = :dept_id"
+        where_dept = " AND d.dept_id = :dept_id"
         params["dept_id"] = dept_id
     
     sql = f"""
@@ -36,10 +36,10 @@ def get_procurement_summary(from_dt: date, to_dt: date, dept_id: Optional[int] =
         COUNT(CASE WHEN po.status IN ('Draft', 'Submitted', 'Approved', 'Ordered') THEN 1 END) as pending_orders,
         COUNT(CASE WHEN po.status = 'Received' THEN 1 END) * 100.0 / NULLIF(COUNT(po.order_id), 0) as completion_rate
     FROM finance_departments d
-    LEFT JOIN procurement_orders po ON o.dept_id = po.dept_id
+    LEFT JOIN procurement_orders po ON d.dept_id = po.dept_id
         AND po.order_date BETWEEN :from_dt AND :to_dt
         {where_dept}
-    GROUP BY o.dept_id, d.dept_name, d.dept_code
+    GROUP BY d.dept_id, d.dept_name, d.dept_code
     ORDER BY total_value DESC
     """
     
@@ -242,7 +242,7 @@ def get_pending_orders(from_dt: date, to_dt: date, dept_id: Optional[int] = None
     FROM procurement_orders po
     JOIN procurement_vendors v ON po.vendor_id = v.vendor_id
     JOIN procurement_categories c ON po.category_id = c.category_id
-    JOIN finance_departments d ON po.dept_id = o.dept_id
+    JOIN finance_departments d ON po.dept_id = d.dept_id
     WHERE po.order_date BETWEEN :from_dt AND :to_dt
         AND po.status IN ('Draft', 'Submitted', 'Approved', 'Ordered')
         {where_dept}
@@ -324,7 +324,7 @@ def get_spend_analysis(from_dt: date, to_dt: date, dept_id: Optional[int] = None
     FROM procurement_orders po
     JOIN procurement_vendors v ON po.vendor_id = v.vendor_id
     JOIN procurement_categories c ON po.category_id = c.category_id
-    JOIN finance_departments d ON po.dept_id = o.dept_id
+    JOIN finance_departments d ON po.dept_id = d.dept_id
     JOIN finance_cost_centers cc ON po.cost_center_id = cc.cost_center_id
     WHERE po.order_date BETWEEN :from_dt AND :to_dt
         {where_dept}

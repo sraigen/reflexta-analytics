@@ -15,6 +15,8 @@ from src.procurement_queries import (
     get_delivery_performance,
     get_spend_analysis
 )
+from src.auth import UserAuth, require_auth, require_permission
+from src.auth_ui import render_auth_guard, render_auth_navbar
 from src.procurement_charts import (
     vendor_performance_chart,
     procurement_trends_chart,
@@ -29,6 +31,13 @@ from src.procurement_charts import (
 from src.ui import empty_state
 
 st.set_page_config(page_title="Procurement Dashboard", layout="wide")
+
+# Authentication guard
+if not render_auth_guard():
+    st.stop()
+
+# Render authentication navbar
+render_auth_navbar()
 
 # Procurement Dashboard Filters - Sidebar Approach
 with st.sidebar:
@@ -281,7 +290,6 @@ try:
     else:
         st.warning("No procurement data available for the selected period.")
     
-
     # Vendor Performance Analysis
     st.markdown('<div class="section-header">Vendor Performance Analysis</div>', unsafe_allow_html=True)
     

@@ -15,6 +15,8 @@ from src.finance_queries import (
     get_pending_transactions,
     get_vendor_analysis
 )
+from src.auth import UserAuth, require_auth, require_permission
+from src.auth_ui import render_auth_guard, render_auth_navbar
 from src.finance_charts import (
     budget_vs_actual_chart,
     budget_utilization_gauge,
@@ -27,6 +29,13 @@ from src.finance_charts import (
 from src.ui import empty_state
 
 st.set_page_config(page_title="Finance Dashboard", layout="wide")
+
+# Authentication guard
+if not render_auth_guard():
+    st.stop()
+
+# Render authentication navbar
+render_auth_navbar()
 
 # Finance Dashboard Filters - Sidebar Approach
 with st.sidebar:
@@ -279,7 +288,6 @@ try:
     else:
         st.info("No budget data available for the selected period.")
     
-
     # Monthly Trends
     st.markdown('<div class="section-header">Financial Trends</div>', unsafe_allow_html=True)
     

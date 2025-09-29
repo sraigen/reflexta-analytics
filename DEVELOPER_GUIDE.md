@@ -10,20 +10,9 @@ This is a production-grade data visualization web application built with Python,
 - **Frontend**: Streamlit 1.32.0+
 - **Backend**: Python 3.10+
 - **Database**: PostgreSQL with SQLAlchemy 2.0+
-- **Visualization**: Plotly Express with interactive drill-down
+- **Visualization**: Plotly Express
 - **Styling**: Custom CSS with luxury design system
-- **AI Integration**: DeepSeek API for intelligent assistance
 - **Deployment**: Streamlit Cloud + GitHub
-
-### 🆕 Latest Features
-- **Interactive Drill-Down**: Click on any chart element to see detailed breakdowns
-- **Department Analysis**: Drill-down from department to sub-department to transactions
-- **Monthly Trends**: Click on month points to see daily spending breakdowns
-- **Vendor Performance**: Click on vendor bars to see their complete order history
-- **Category Breakdown**: Click on category slices to see detailed item analysis
-- **Cross-Chart Filtering**: Click on one chart to filter all related charts
-- **Smart Hover Effects**: Professional tooltips with detailed information
-- **Luxury Color Palette**: Sophisticated enterprise-grade color scheme
 
 ### Project Structure
 ```
