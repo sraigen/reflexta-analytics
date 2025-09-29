@@ -19,7 +19,6 @@ from src.procurement_queries import get_procurement_kpis, get_procurement_summar
 from src.ui import kpi_row, section_header, empty_state
 from src.sidebar_ai_chat import render_sidebar_ai_chat
 from src.enhanced_ai_assistant import get_enhanced_ai_assistant
-from src.auth import get_auth_manager, is_authenticated, get_current_user
 
 # Page configuration
 st.set_page_config(
@@ -28,36 +27,6 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded"
 )
-
-# Authentication Check
-if not is_authenticated():
-    st.error("🔒 Authentication Required")
-    st.info("Please log in to access the Reflexta Analytics Platform.")
-    
-    col1, col2, col3 = st.columns([1, 2, 1])
-    with col2:
-        if st.button("🔐 Go to Login", use_container_width=True, type="primary"):
-            st.switch_page("pages/00_Login.py")
-    
-    st.stop()
-
-# Get current user
-current_user = get_current_user()
-if current_user:
-    st.sidebar.markdown(f"👤 **{current_user['first_name']} {current_user['last_name']}**")
-    st.sidebar.markdown(f"🔐 **{current_user['role_name']}**")
-    st.sidebar.markdown(f"🏢 **{current_user.get('department_name', 'N/A')}**")
-    
-    if st.sidebar.button("🚪 Logout", use_container_width=True):
-        # Logout user
-        auth_manager = get_auth_manager()
-        session_id = st.session_state.get('session_id')
-        if session_id:
-            auth_manager.logout_user(session_id)
-        
-        # Clear session state
-        st.session_state.clear()
-        st.rerun()
 
 # Initialize AI assistant
 if "ai_assistant" not in st.session_state:
