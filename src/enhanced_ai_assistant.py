@@ -66,8 +66,8 @@ class EnhancedAIAssistant:
                         "spend_growth": procurement_kpis.get('spend_growth', 0)
                     },
                     "department_data": {
-                        "finance_departments": finance_summary.to_dict('records') if not finance_summary.empty else [],
-                        "procurement_departments": procurement_summary.to_dict('records') if not procurement_summary.empty else []
+                        "finance_departments": self._convert_dataframe_to_json(finance_summary),
+                        "procurement_departments": self._convert_dataframe_to_json(procurement_summary)
                     }
                 },
                 "available_modules": [
@@ -101,6 +101,32 @@ class EnhancedAIAssistant:
                 "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                 "fallback_mode": True
             }
+    
+    def _convert_dataframe_to_json(self, df):
+        """Convert pandas DataFrame to JSON-serializable format."""
+        try:
+            if df is None or df.empty:
+                return []
+            
+            # Convert DataFrame to records and handle any non-serializable values
+            records = []
+            for _, row in df.iterrows():
+                record = {}
+                for col in df.columns:
+                    value = row[col]
+                    # Handle pandas Series and other non-serializable types
+                    if hasattr(value, 'item'):  # pandas scalar
+                        record[col] = value.item()
+                    elif hasattr(value, 'tolist'):  # numpy array
+                        record[col] = value.tolist()
+                    else:
+                        record[col] = str(value) if value is not None else None
+                records.append(record)
+            
+            return records
+            
+        except Exception as e:
+            return [{"error": f"Failed to convert data: {str(e)}"}]
     
     def _generate_data_insights(self, finance_kpis, procurement_kpis, finance_summary, procurement_summary):
         """Generate insights from real data."""
@@ -166,10 +192,16 @@ class EnhancedAIAssistant:
                 
                 Always be helpful and provide valuable guidance even without real-time data access."""
             else:
+                # Safely serialize context to JSON
+                try:
+                    context_json = json.dumps(context, indent=2, default=str)
+                except Exception as e:
+                    context_json = f"Data context available but contains complex objects: {str(e)}"
+                
                 system_prompt = f"""You are an AI assistant for Reflexta Data Intelligence, an enterprise analytics platform. 
                 
                 CURRENT REAL DATA CONTEXT:
-                {json.dumps(context, indent=2)}
+                {context_json}
                 
                 You have access to real-time data from the following modules:
                 - Finance Dashboard: Budget management, transaction tracking, cost center analysis
