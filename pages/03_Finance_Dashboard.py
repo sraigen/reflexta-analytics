@@ -279,6 +279,250 @@ try:
     else:
         st.info("No budget data available for the selected period.")
     
+    # Interactive Charts with Drill-Down
+    st.markdown('<div class="section-header">Interactive Analytics</div>', unsafe_allow_html=True)
+    
+    if not finance_data.empty:
+        # Create tabs for different chart types
+        tab1, tab2, tab3 = st.tabs([
+            "🏢 Department Analysis", 
+            "📅 Monthly Trends", 
+            "📊 Category Breakdown"
+        ])
+        
+        with tab1:
+            st.markdown("### Department Spending with Drill-Down")
+            st.markdown("**Click on any department bar to see detailed breakdown**")
+            
+            # Prepare department data
+            dept_data = finance_data.groupby('department')['amount'].sum().reset_index()
+            dept_data = dept_data.sort_values('amount', ascending=False)
+            
+            # Create department chart with drill-down
+            import plotly.express as px
+            import plotly.graph_objects as go
+            
+            fig = px.bar(
+                dept_data,
+                x='department',
+                y='amount',
+                title="Department Spending Overview",
+                color='amount',
+                color_continuous_scale='Blues',
+                hover_data={'amount': ':$,.0f'}
+            )
+            
+            # Add click functionality
+            fig.update_traces(
+                hovertemplate="<b>%{x}</b><br>Total: $%{y:,.0f}<br><extra></extra>",
+                customdata=dept_data['department'].tolist()
+            )
+            
+            # Configure layout
+            fig.update_layout(
+                title={
+                    'text': "Department Spending Overview",
+                    'x': 0.5,
+                    'xanchor': 'center',
+                    'font': {'size': 16, 'color': '#1e293b'}
+                },
+                xaxis_title="Department",
+                yaxis_title="Total Spending ($)",
+                hovermode='closest',
+                clickmode='event+select',
+                height=500,
+                showlegend=False
+            )
+            
+            # Display the chart
+            st.plotly_chart(fig, use_container_width=True, key="dept_chart")
+            
+            # Handle drill-down
+            if st.session_state.get('dept_chart_click'):
+                clicked_data = st.session_state['dept_chart_click']
+                if clicked_data and 'points' in clicked_data:
+                    point = clicked_data['points'][0]
+                    selected_dept = point.get('x', '')
+                    
+                    st.markdown(f"#### 🔍 Drill-Down: {selected_dept}")
+                    
+                    # Filter data for selected department
+                    filtered_data = finance_data[finance_data['department'] == selected_dept]
+                    
+                    if not filtered_data.empty:
+                        # Show detailed transactions
+                        st.markdown("#### 📋 Detailed Transactions")
+                        st.dataframe(
+                            filtered_data[['date', 'description', 'amount', 'category', 'status']],
+                            use_container_width=True
+                        )
+        
+        with tab2:
+            st.markdown("### Monthly Spending Trends with Drill-Down")
+            st.markdown("**Click on any month point to see daily breakdown**")
+            
+            # Prepare monthly data
+            finance_data['month'] = pd.to_datetime(finance_data['date']).dt.to_period('M')
+            monthly_data = finance_data.groupby('month')['amount'].sum().reset_index()
+            monthly_data['month_str'] = monthly_data['month'].astype(str)
+            
+            # Create monthly trend chart
+            trend_fig = px.line(
+                monthly_data,
+                x='month_str',
+                y='amount',
+                title="Monthly Spending Trends",
+                markers=True,
+                line_shape='spline'
+            )
+            
+            # Add click functionality
+            trend_fig.update_traces(
+                hovertemplate="<b>%{x}</b><br>Total: $%{y:,.0f}<br><extra></extra>",
+                customdata=monthly_data['month'].tolist()
+            )
+            
+            # Configure layout
+            trend_fig.update_layout(
+                title={
+                    'text': "Monthly Spending Trends",
+                    'x': 0.5,
+                    'xanchor': 'center',
+                    'font': {'size': 16, 'color': '#1e293b'}
+                },
+                xaxis_title="Month",
+                yaxis_title="Total Spending ($)",
+                hovermode='closest',
+                clickmode='event+select',
+                height=500
+            )
+            
+            # Display the chart
+            st.plotly_chart(trend_fig, use_container_width=True, key="trend_chart")
+            
+            # Handle drill-down
+            if st.session_state.get('trend_chart_click'):
+                clicked_data = st.session_state['trend_chart_click']
+                if clicked_data and 'points' in clicked_data:
+                    point = clicked_data['points'][0]
+                    selected_month = point.get('x', '')
+                    
+                    st.markdown(f"#### 🔍 Drill-Down: {selected_month}")
+                    
+                    # Filter data for selected month
+                    month_data = finance_data[pd.to_datetime(finance_data['date']).dt.to_period('M').astype(str) == selected_month]
+                    
+                    if not month_data.empty:
+                        # Show daily breakdown
+                        daily_data = month_data.groupby(pd.to_datetime(month_data['date']).dt.date)['amount'].sum().reset_index()
+                        daily_data.columns = ['date', 'amount']
+                        daily_data = daily_data.sort_values('date')
+                        
+                        # Create daily chart
+                        daily_fig = px.bar(
+                            daily_data,
+                            x='date',
+                            y='amount',
+                            title=f"Daily Spending for {selected_month}",
+                            color='amount',
+                            color_continuous_scale='Oranges'
+                        )
+                        
+                        daily_fig.update_layout(
+                            height=400,
+                            showlegend=False,
+                            title={
+                                'text': f"Daily Spending for {selected_month}",
+                                'x': 0.5,
+                                'xanchor': 'center'
+                            }
+                        )
+                        
+                        st.plotly_chart(daily_fig, use_container_width=True)
+        
+        with tab3:
+            st.markdown("### Category Spending Breakdown with Drill-Down")
+            st.markdown("**Click on any category slice to see detailed breakdown**")
+            
+            # Prepare category data
+            category_data = finance_data.groupby('category')['amount'].sum().reset_index()
+            category_data = category_data.sort_values('amount', ascending=False)
+            
+            # Create category pie chart
+            category_fig = px.pie(
+                category_data,
+                values='amount',
+                names='category',
+                title="Spending by Category",
+                color_discrete_sequence=px.colors.qualitative.Set3
+            )
+            
+            # Add click functionality
+            category_fig.update_traces(
+                hovertemplate="<b>%{label}</b><br>Amount: $%{value:,.0f}<br>Percentage: %{percent}<br><extra></extra>",
+                customdata=category_data['category'].tolist()
+            )
+            
+            # Configure layout
+            category_fig.update_layout(
+                title={
+                    'text': "Spending by Category",
+                    'x': 0.5,
+                    'xanchor': 'center',
+                    'font': {'size': 16, 'color': '#1e293b'}
+                },
+                hovermode='closest',
+                clickmode='event+select',
+                height=500
+            )
+            
+            # Display the chart
+            st.plotly_chart(category_fig, use_container_width=True, key="category_chart")
+            
+            # Handle drill-down
+            if st.session_state.get('category_chart_click'):
+                clicked_data = st.session_state['category_chart_click']
+                if clicked_data and 'points' in clicked_data:
+                    point = clicked_data['points'][0]
+                    selected_category = point.get('label', '')
+                    
+                    st.markdown(f"#### 🔍 Drill-Down: {selected_category}")
+                    
+                    # Filter data for selected category
+                    category_items = finance_data[finance_data['category'] == selected_category]
+                    
+                    if not category_items.empty:
+                        # Show category summary
+                        col1, col2, col3 = st.columns(3)
+                        
+                        with col1:
+                            st.metric(
+                                "Total Items",
+                                len(category_items),
+                                delta=None
+                            )
+                        
+                        with col2:
+                            st.metric(
+                                "Total Amount",
+                                f"${category_items['amount'].sum():,.0f}",
+                                delta=None
+                            )
+                        
+                        with col3:
+                            st.metric(
+                                "Average Item",
+                                f"${category_items['amount'].mean():,.0f}",
+                                delta=None
+                            )
+                        
+                        # Show detailed items
+                        st.markdown("#### 📋 Item Details")
+                        st.dataframe(
+                            category_items[['date', 'description', 'amount', 'department', 'status']],
+                            use_container_width=True
+                        )
+
     # Monthly Trends
     st.markdown('<div class="section-header">Financial Trends</div>', unsafe_allow_html=True)
     
