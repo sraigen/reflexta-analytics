@@ -102,12 +102,19 @@ def render_chat_interface():
                 </div>
                 """, unsafe_allow_html=True)
     
-    # Chat input
-    user_question = st.text_input(
-        "Ask me anything about the dashboard...",
-        placeholder="e.g., What does 'Budget Utilization' mean?",
-        key="chat_input"
-    )
+    # Handle selected question
+    if "selected_question" in st.session_state and st.session_state.selected_question:
+        # Use the selected question as the input
+        user_question = st.session_state.selected_question
+        # Clear the selected question to avoid repetition
+        st.session_state.selected_question = None
+    else:
+        # Chat input
+        user_question = st.text_input(
+            "Ask me anything about the dashboard...",
+            placeholder="e.g., What does 'Budget Utilization' mean?",
+            key="chat_input"
+        )
     
     # Chat buttons
     col1, col2 = st.columns(2)
@@ -133,8 +140,7 @@ def render_chat_interface():
                     'timestamp': datetime.now()
                 })
                 
-                # Clear input and rerun
-                st.session_state.chat_input = ""
+                # Rerun to refresh the interface
                 st.rerun()
             else:
                 st.warning("Please enter a question!")
@@ -153,8 +159,8 @@ def render_chat_interface():
         # Show 4 suggested questions
         for i, question in enumerate(suggested_questions[:4]):
             if st.button(f"💭 {question}", key=f"suggested_{i}", use_container_width=True):
-                # Set the question as input
-                st.session_state.chat_input = question
+                # Store the question for processing
+                st.session_state.selected_question = question
                 st.rerun()
     
     # AI status indicator
