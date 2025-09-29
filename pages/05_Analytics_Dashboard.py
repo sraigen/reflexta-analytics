@@ -1,37 +1,101 @@
-"""
-Comprehensive Analytics Dashboard
-Advanced business intelligence and reporting with professional visualizations.
-"""
-
 from __future__ import annotations
 
-import datetime as dt
-
 import streamlit as st
+import pandas as pd
+import plotly.express as px
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
+import datetime as dt
+from typing import Optional, Any
 
-from src.analytics_queries import (
-    get_executive_summary,
-    get_department_performance,
-    get_vendor_performance_analysis,
-    get_financial_trends,
-    get_procurement_trends,
-    get_budget_vs_actual_analysis,
-    get_category_spending_analysis
-)
-from src.analytics_charts import (
-    executive_summary_chart,
-    department_performance_chart,
-    vendor_performance_radar_chart,
-    financial_trends_chart,
-    budget_vs_actual_chart,
-    category_spending_pie_chart,
-    procurement_trends_chart,
-    performance_heatmap
-)
-from src.db import health_check
+# Import database and query functions
+from src.db import get_conn, health_check
+from src.finance_queries import get_finance_kpis, get_finance_monthly_trends, get_vendor_analysis
+from src.procurement_queries import get_procurement_kpis, get_procurement_trends, get_vendor_performance
 from src.ui import empty_state
 
 st.set_page_config(page_title="Analytics Dashboard", layout="wide")
+
+# Professional CSS for Analytics Dashboard
+st.markdown("""
+<style>
+    .analytics-header {
+        background: linear-gradient(90deg, #2c3e50 0%, #34495e 100%);
+        color: white;
+        padding: 2rem;
+        border-radius: 10px;
+        margin-bottom: 2rem;
+        text-align: center;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    
+    .analytics-header h1 {
+        margin: 0;
+        font-size: 2.5rem;
+        font-weight: 700;
+    }
+    
+    .analytics-header p {
+        margin: 0.5rem 0 0 0;
+        font-size: 1.2rem;
+        opacity: 0.9;
+    }
+    
+    .section-header {
+        background: linear-gradient(90deg, #3498db 0%, #2980b9 100%);
+        color: white;
+        padding: 1rem 1.5rem;
+        border-radius: 8px;
+        margin: 2rem 0 1rem 0;
+        font-size: 1.3rem;
+        font-weight: 600;
+        text-align: center;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    
+    .metric-card {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 10px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        border-left: 4px solid #3498db;
+        margin-bottom: 1rem;
+    }
+    
+    .metric-value {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #2c3e50;
+        margin: 0;
+    }
+    
+    .metric-label {
+        font-size: 0.9rem;
+        color: #7f8c8d;
+        margin: 0;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .metric-change {
+        font-size: 0.8rem;
+        font-weight: 600;
+        margin-top: 0.5rem;
+    }
+    
+    .positive {
+        color: #27ae60;
+    }
+    
+    .negative {
+        color: #e74c3c;
+    }
+    
+    .neutral {
+        color: #95a5a6;
+    }
+</style>
+""", unsafe_allow_html=True)
 
 # Analytics Dashboard Filters - Sidebar Approach
 with st.sidebar:
@@ -55,33 +119,6 @@ with st.sidebar:
         help="Filter by specific department"
     )
 
-    analysis_type = st.selectbox(
-        "Analysis Type",
-        options=["Comprehensive", "Financial Only", "Procurement Only", "Performance Only"],
-        help="Select type of analysis"
-    )
-
-    # Additional filters
-    st.markdown("**Additional Filters**")
-    
-    time_period = st.selectbox(
-        "Time Period",
-        options=["Last 30 Days", "Last 90 Days", "Last 6 Months", "Last Year", "Custom"],
-        help="Select time period for analysis"
-    )
-
-    metric_focus = st.selectbox(
-        "Metric Focus",
-        options=["All Metrics", "Financial KPIs", "Operational KPIs", "Vendor KPIs"],
-        help="Focus on specific metrics"
-    )
-
-    data_quality = st.selectbox(
-        "Data Quality",
-        options=["All Data", "Complete Records", "Validated Data"],
-        help="Filter by data quality"
-    )
-
     # Get department ID if specific department is selected
     dept_id = None
     if department != "All":
@@ -91,141 +128,11 @@ with st.sidebar:
         }
         dept_id = dept_mapping.get(department)
 
-
-# Professional CSS for Analytics Dashboard
-st.markdown("""
-<style>
-    .analytics-header {
-        background: linear-gradient(90deg, #2c3e50 0%, #34495e 100%);
-        padding: 2rem 1rem;
-        border-radius: 8px;
-        margin-bottom: 2rem;
-        color: white;
-        text-align: center;
-        border: 1px solid #34495e;
-    }
-
-    .analytics-header h1 {
-        margin: 0;
-        font-size: 2.2rem;
-        font-weight: 600;
-        letter-spacing: -0.5px;
-    }
-
-    .analytics-header p {
-        margin: 0.5rem 0 0 0;
-        font-size: 1.1rem;
-        opacity: 0.9;
-        font-weight: 300;
-    }
-
-    .section-header {
-        background: linear-gradient(90deg, #9b59b6 0%, #8e44ad 100%);
-        color: white;
-        padding: 0.8rem 1.2rem;
-        margin: 1.5rem 0 1rem 0;
-        border-radius: 6px;
-        font-weight: 500;
-        font-size: 1.1rem;
-        border-left: 4px solid #9b59b6;
-    }
-
-    .metric-card {
-        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-        padding: 1.5rem;
-        border-radius: 8px;
-        border: 1px solid #dee2e6;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        text-align: center;
-        margin-bottom: 1rem;
-    }
-
-    .metric-value {
-        font-size: 2rem;
-        font-weight: 700;
-        color: #2c3e50;
-        margin-bottom: 0.5rem;
-    }
-
-    .metric-label {
-        font-size: 0.9rem;
-        color: #6c757d;
-        font-weight: 500;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-    }
-
-    .metric-change {
-        font-size: 0.8rem;
-        margin-top: 0.5rem;
-        padding: 0.2rem 0.5rem;
-        border-radius: 4px;
-        font-weight: 500;
-    }
-
-    .metric-change.positive {
-        background-color: #d4edda;
-        color: #155724;
-    }
-
-    .metric-change.negative {
-        background-color: #f8d7da;
-        color: #721c24;
-    }
-
-    /* Dark mode compatibility */
-    .stApp[data-theme="dark"] .analytics-header {
-        background: linear-gradient(90deg, #2c3e50 0%, #34495e 100%);
-        color: white !important;
-    }
-
-    .stApp[data-theme="dark"] .analytics-header h1 {
-        color: white !important;
-    }
-
-    .stApp[data-theme="dark"] .analytics-header p {
-        color: rgba(255, 255, 255, 0.9) !important;
-    }
-
-    .stApp[data-theme="dark"] .section-header {
-        background: linear-gradient(90deg, #9b59b6 0%, #8e44ad 100%);
-        color: white !important;
-    }
-
-    .stApp[data-theme="dark"] .metric-card {
-        background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
-        border: 1px solid #4a5568;
-        color: white;
-    }
-
-    .stApp[data-theme="dark"] .metric-value {
-        color: white !important;
-    }
-
-    .stApp[data-theme="dark"] .metric-label {
-        color: rgba(255, 255, 255, 0.8) !important;
-    }
-    
-    /* Fix excessive spacing and scrolling issues */
-    .stApp {
-        overflow-x: hidden;
-    }
-    
-    .stPlotlyChart {
-        max-height: 600px !important;
-    }
-    
-    .stDataFrame {
-        max-height: 400px !important;
-    }
-</style>
-""", unsafe_allow_html=True)
-
 # Header
 st.markdown("""
 <div class="analytics-header">
-    <h1>📊 Analytics Dashboard</h1>
-    <p>Advanced Business Intelligence & Comprehensive Reporting</p>
+    <h1>📊 Business Intelligence Dashboard</h1>
+    <p>Executive Analytics & Key Performance Indicators</p>
 </div>
 """, unsafe_allow_html=True)
 
@@ -234,111 +141,230 @@ if not health_check():
     st.stop()
 
 try:
-    # Executive Summary
+    # Executive Summary KPIs
     st.markdown('<div class="section-header">Executive Summary</div>', unsafe_allow_html=True)
     
-    summary_data = get_executive_summary(from_date, to_date, dept_id)
-    if not empty_state(summary_data):
-        st.plotly_chart(
-            executive_summary_chart(summary_data),
-            use_container_width=True
+    # Get finance and procurement KPIs
+    finance_kpis = get_finance_kpis(from_date, to_date, dept_id)
+    procurement_kpis = get_procurement_kpis(from_date, to_date, dept_id)
+    
+    if not finance_kpis.empty and not procurement_kpis.empty:
+        fin_row = finance_kpis.iloc[0]
+        proc_row = procurement_kpis.iloc[0]
+        
+        # Create KPI columns
+        col1, col2, col3, col4 = st.columns(4)
+        
+        with col1:
+            st.markdown(f"""
+            <div class="metric-card">
+                <div class="metric-value">${fin_row['total_revenue']:,.0f}</div>
+                <div class="metric-label">Total Revenue</div>
+                <div class="metric-change {'positive' if fin_row['revenue_growth'] > 0 else 'negative' if fin_row['revenue_growth'] < 0 else 'neutral'}">
+                    {fin_row['revenue_growth']:+.0f} vs previous period
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+        
+        with col2:
+            st.markdown(f"""
+            <div class="metric-card">
+                <div class="metric-value">${fin_row['net_income']:,.0f}</div>
+                <div class="metric-label">Net Income</div>
+                <div class="metric-change {'positive' if fin_row['net_income_growth'] > 0 else 'negative' if fin_row['net_income_growth'] < 0 else 'neutral'}">
+                    {fin_row['net_income_growth']:+.0f} vs previous period
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+        
+        with col3:
+            st.markdown(f"""
+            <div class="metric-card">
+                <div class="metric-value">{proc_row['total_orders']:,.0f}</div>
+                <div class="metric-label">Total Orders</div>
+                <div class="metric-change {'positive' if proc_row['order_growth'] > 0 else 'negative' if proc_row['order_growth'] < 0 else 'neutral'}">
+                    {proc_row['order_growth']:+.0f} vs previous period
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+        
+        with col4:
+            st.markdown(f"""
+            <div class="metric-card">
+                <div class="metric-value">${proc_row['total_spend']:,.0f}</div>
+                <div class="metric-label">Total Spend</div>
+                <div class="metric-change {'positive' if proc_row['spend_growth'] > 0 else 'negative' if proc_row['spend_growth'] < 0 else 'neutral'}">
+                    {proc_row['spend_growth']:+.0f} vs previous period
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+    
+    # Financial Performance Trends
+    st.markdown('<div class="section-header">Financial Performance Trends</div>', unsafe_allow_html=True)
+    
+    trends_data = get_finance_monthly_trends(from_date, to_date)
+    if not empty_state(trends_data):
+        # Create financial trends chart
+        fig = go.Figure()
+        
+        # Add revenue line
+        revenue_data = trends_data[trends_data['transaction_type'] == 'Revenue']
+        if not revenue_data.empty:
+            fig.add_trace(go.Scatter(
+                x=revenue_data['month'],
+                y=revenue_data['total_amount'],
+                mode='lines+markers',
+                name='Revenue',
+                line=dict(color='#27ae60', width=3),
+                marker=dict(size=8)
+            ))
+        
+        # Add expense line
+        expense_data = trends_data[trends_data['transaction_type'] == 'Expense']
+        if not expense_data.empty:
+            fig.add_trace(go.Scatter(
+                x=expense_data['month'],
+                y=expense_data['total_amount'],
+                mode='lines+markers',
+                name='Expenses',
+                line=dict(color='#e74c3c', width=3),
+                marker=dict(size=8)
+            ))
+        
+        fig.update_layout(
+            title="Monthly Financial Trends",
+            xaxis_title="Month",
+            yaxis_title="Amount ($)",
+            height=400,
+            showlegend=True,
+            hovermode='x unified'
         )
-    else:
-        st.info("No executive summary data available for the selected period.")
-    
-    # Department Performance
-    st.markdown('<div class="section-header">Department Performance Analysis</div>', unsafe_allow_html=True)
-    
-    dept_data = get_department_performance(from_date, to_date, dept_id)
-    if not empty_state(dept_data):
-        st.plotly_chart(
-            department_performance_chart(dept_data),
-            use_container_width=True
-        )
-    else:
-        st.info("No department performance data available for the selected period.")
-    
-    # Vendor Performance Analysis
-    st.markdown('<div class="section-header">Vendor Performance Analysis</div>', unsafe_allow_html=True)
-    
-    vendor_data = get_vendor_performance_analysis(from_date, to_date, dept_id)
-    if not empty_state(vendor_data):
-        st.plotly_chart(
-            vendor_performance_radar_chart(vendor_data),
-            use_container_width=True
-        )
-    else:
-        st.info("No vendor performance data available for the selected period.")
-    
-    # Financial Trends
-    st.markdown('<div class="section-header">Financial Trends Analysis</div>', unsafe_allow_html=True)
-    
-    financial_data = get_financial_trends(from_date, to_date, dept_id)
-    if not empty_state(financial_data):
-        st.plotly_chart(
-            financial_trends_chart(financial_data),
-            use_container_width=True
-        )
+        
+        st.plotly_chart(fig, use_container_width=True)
     else:
         st.info("No financial trends data available for the selected period.")
     
-    # Procurement Trends
-    st.markdown('<div class="section-header">Procurement Trends Analysis</div>', unsafe_allow_html=True)
+    # Procurement Performance
+    st.markdown('<div class="section-header">Procurement Performance</div>', unsafe_allow_html=True)
     
-    procurement_data = get_procurement_trends(from_date, to_date, dept_id)
-    if not empty_state(procurement_data):
-        st.plotly_chart(
-            procurement_trends_chart(procurement_data),
-            use_container_width=True
+    procurement_trends = get_procurement_trends(from_date, to_date, dept_id)
+    if not empty_state(procurement_trends):
+        # Create procurement trends chart
+        fig = go.Figure()
+        
+        fig.add_trace(go.Scatter(
+            x=procurement_trends['month_name'],
+            y=procurement_trends['total_value'],
+            mode='lines+markers',
+            name='Procurement Value',
+            line=dict(color='#3498db', width=3),
+            marker=dict(size=8)
+        ))
+        
+        fig.update_layout(
+            title="Procurement Trends Over Time",
+            xaxis_title="Month",
+            yaxis_title="Total Value ($)",
+            height=400,
+            showlegend=True
         )
+        
+        st.plotly_chart(fig, use_container_width=True)
     else:
         st.info("No procurement trends data available for the selected period.")
     
-    # Budget vs Actual Analysis
-    st.markdown('<div class="section-header">Budget vs Actual Analysis</div>', unsafe_allow_html=True)
+    # Vendor Performance Analysis
+    st.markdown('<div class="section-header">Top Vendors by Performance</div>', unsafe_allow_html=True)
     
-    budget_data = get_budget_vs_actual_analysis(from_date, to_date, dept_id)
-    if not empty_state(budget_data):
-        st.plotly_chart(
-            budget_vs_actual_chart(budget_data),
-            use_container_width=True
+    vendor_performance = get_vendor_performance(from_date, to_date, dept_id)
+    if not empty_state(vendor_performance):
+        # Create vendor performance chart
+        fig = go.Figure()
+        
+        # Sort by total value and take top 10
+        top_vendors = vendor_performance.head(10)
+        
+        fig.add_trace(go.Bar(
+            x=top_vendors['total_value'],
+            y=top_vendors['vendor_name'],
+            orientation='h',
+            marker=dict(color='#9b59b6'),
+            text=top_vendors['total_value'],
+            texttemplate='$%{text:,.0f}',
+            textposition='auto'
+        ))
+        
+        fig.update_layout(
+            title="Top 10 Vendors by Total Value",
+            xaxis_title="Total Value ($)",
+            yaxis_title="Vendor",
+            height=500,
+            showlegend=False
         )
+        
+        st.plotly_chart(fig, use_container_width=True)
     else:
-        st.info("No budget analysis data available for the selected period.")
+        st.info("No vendor performance data available for the selected period.")
     
-    # Category Spending Analysis
-    st.markdown('<div class="section-header">Category Spending Analysis</div>', unsafe_allow_html=True)
+    # Department Performance Summary
+    st.markdown('<div class="section-header">Department Performance Summary</div>', unsafe_allow_html=True)
     
-    category_data = get_category_spending_analysis(from_date, to_date, dept_id)
-    if not empty_state(category_data):
-        st.plotly_chart(
-            category_spending_pie_chart(category_data),
-            use_container_width=True
-        )
+    # Create a simple department performance table
+    if dept_id is None:  # Show all departments
+        dept_summary = []
+        departments = ["Finance", "Procurement", "IT", "HR", "Operations", "Marketing", "Sales", "Legal"]
+        
+        for dept_name in departments:
+            dept_mapping = {
+                "Finance": 1, "Procurement": 2, "IT": 3, "HR": 4, "Operations": 5,
+                "Marketing": 6, "Sales": 7, "Legal": 8
+            }
+            current_dept_id = dept_mapping.get(dept_name)
+            
+            if current_dept_id:
+                dept_finance = get_finance_kpis(from_date, to_date, current_dept_id)
+                dept_procurement = get_procurement_kpis(from_date, to_date, current_dept_id)
+                
+                if not dept_finance.empty and not dept_procurement.empty:
+                    fin_row = dept_finance.iloc[0]
+                    proc_row = dept_procurement.iloc[0]
+                    
+                    dept_summary.append({
+                        'Department': dept_name,
+                        'Revenue': fin_row['total_revenue'],
+                        'Expenses': fin_row['total_expenses'],
+                        'Net Income': fin_row['net_income'],
+                        'Orders': proc_row['total_orders'],
+                        'Spend': proc_row['total_spend']
+                    })
+        
+        if dept_summary:
+            summary_df = pd.DataFrame(dept_summary)
+            st.dataframe(
+                summary_df,
+                hide_index=True,
+                column_config={
+                    "Revenue": st.column_config.NumberColumn("Revenue ($)", format="$%.2f"),
+                    "Expenses": st.column_config.NumberColumn("Expenses ($)", format="$%.2f"),
+                    "Net Income": st.column_config.NumberColumn("Net Income ($)", format="$%.2f"),
+                    "Orders": st.column_config.NumberColumn("Orders", format="%d"),
+                    "Spend": st.column_config.NumberColumn("Spend ($)", format="$%.2f")
+                }
+            )
+        else:
+            st.info("No department performance data available for the selected period.")
     else:
-        st.info("No category spending data available for the selected period.")
-    
-    # Performance Heatmap
-    st.markdown('<div class="section-header">Performance Heatmap</div>', unsafe_allow_html=True)
-    
-    heatmap_data = get_department_performance(from_date, to_date, dept_id)
-    if not empty_state(heatmap_data):
-        st.plotly_chart(
-            performance_heatmap(heatmap_data),
-            use_container_width=True
-        )
-    else:
-        st.info("No performance heatmap data available for the selected period.")
+        st.info("Department-specific view selected. Use 'All' departments to see department comparison.")
 
 except Exception as e:
     st.error(f"Error loading analytics data: {str(e)}")
     st.info("Please check your database connection and try again.")
 
-# Footer to prevent excessive scrolling
+# Footer
 st.markdown("---")
 st.markdown("""
 <div style="text-align: center; padding: 2rem; color: #666;">
-    <p>📊 Analytics Dashboard - Reflexta Data Intelligence</p>
-    <p>Advanced Business Intelligence & Comprehensive Reporting</p>
+    <p>📊 Business Intelligence Dashboard - Reflexta Data Intelligence</p>
+    <p>Executive Analytics & Key Performance Indicators</p>
 </div>
 """, unsafe_allow_html=True)
