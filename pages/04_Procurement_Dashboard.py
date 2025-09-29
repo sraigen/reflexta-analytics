@@ -30,76 +30,71 @@ from src.ui import empty_state
 
 st.set_page_config(page_title="Procurement Dashboard", layout="wide")
 
-# Procurement Dashboard Filters - Sticky
-st.markdown("""
-<div style="position: sticky; top: 0; background: white; z-index: 100; padding: 1rem 0; border-bottom: 2px solid #e0e0e0; margin-bottom: 1rem;">
-    <h3>Procurement Filters</h3>
-</div>
-""", unsafe_allow_html=True)
+# Procurement Dashboard Filters - Always Accessible
+with st.expander("🔧 Procurement Filters - Click to Expand/Collapse", expanded=True):
+    col1, col2, col3, col4 = st.columns(4)
 
-col1, col2, col3, col4 = st.columns(4)
+    with col1:
+        from_date = st.date_input(
+            "From Date", 
+            value=dt.date.today() - dt.timedelta(days=30),
+            help="Select start date for analysis"
+        )
 
-with col1:
-    from_date = st.date_input(
-        "From Date", 
-        value=dt.date.today() - dt.timedelta(days=30),
-        help="Select start date for analysis"
-    )
+    with col2:
+        to_date = st.date_input(
+            "To Date", 
+            value=dt.date.today(),
+            help="Select end date for analysis"
+        )
 
-with col2:
-    to_date = st.date_input(
-        "To Date", 
-        value=dt.date.today(),
-        help="Select end date for analysis"
-    )
+    with col3:
+        department = st.selectbox(
+            "Department",
+            options=["All", "Finance", "Procurement", "IT", "HR", "Operations", "Marketing", "Sales", "Legal"],
+            help="Filter by specific department"
+        )
 
-with col3:
-    department = st.selectbox(
-        "Department",
-        options=["All", "Finance", "Procurement", "IT", "HR", "Operations", "Marketing", "Sales", "Legal"],
-        help="Filter by specific department"
-    )
+    with col4:
+        order_status = st.selectbox(
+            "Order Status",
+            options=["All", "Pending", "Approved", "In Progress", "Completed", "Cancelled"],
+            help="Filter by order status"
+        )
 
-with col4:
-    order_status = st.selectbox(
-        "Order Status",
-        options=["All", "Pending", "Approved", "In Progress", "Completed", "Cancelled"],
-        help="Filter by order status"
-    )
+    # Additional filters
+    st.markdown("**Additional Filters**")
+    col1, col2, col3 = st.columns(3)
 
-# Additional filters
-st.markdown("**Additional Filters**")
-col1, col2, col3 = st.columns(3)
+    with col1:
+        vendor = st.selectbox(
+            "Vendor",
+            options=["All"] + [f"Vendor {i}" for i in range(1, 11)],
+            help="Filter by specific vendor"
+        )
 
-with col1:
-    vendor = st.selectbox(
-        "Vendor",
-        options=["All"] + [f"Vendor {i}" for i in range(1, 11)],
-        help="Filter by specific vendor"
-    )
+    with col2:
+        category = st.selectbox(
+            "Category",
+            options=["All", "Office Supplies", "IT Equipment", "Marketing", "Travel", "Utilities", "Professional Services", "Equipment", "Software", "Consulting", "Training"],
+            help="Filter by category"
+        )
 
-with col2:
-    category = st.selectbox(
-        "Category",
-        options=["All", "Office Supplies", "IT Equipment", "Marketing", "Travel", "Utilities", "Professional Services", "Equipment", "Software", "Consulting", "Training"],
-        help="Filter by category"
-    )
+    with col3:
+        priority = st.selectbox(
+            "Priority",
+            options=["All", "Low", "Medium", "High", "Urgent"],
+            help="Filter by priority level"
+        )
 
-with col3:
-    priority = st.selectbox(
-        "Priority",
-        options=["All", "Low", "Medium", "High", "Urgent"],
-        help="Filter by priority level"
-    )
-
-# Get department ID if specific department is selected
-dept_id = None
-if department != "All":
-    dept_mapping = {
-        "Finance": 1, "Procurement": 2, "IT": 3, "HR": 4, "Operations": 5,
-        "Marketing": 6, "Sales": 7, "Legal": 8
-    }
-    dept_id = dept_mapping.get(department)
+    # Get department ID if specific department is selected
+    dept_id = None
+    if department != "All":
+        dept_mapping = {
+            "Finance": 1, "Procurement": 2, "IT": 3, "HR": 4, "Operations": 5,
+            "Marketing": 6, "Sales": 7, "Legal": 8
+        }
+        dept_id = dept_mapping.get(department)
 
 st.markdown("---")
 

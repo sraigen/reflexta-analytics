@@ -28,51 +28,46 @@ from src.ui import empty_state
 
 st.set_page_config(page_title="Finance Dashboard", layout="wide")
 
-# Finance Dashboard Filters - Sticky
-st.markdown("""
-<div style="position: sticky; top: 0; background: white; z-index: 100; padding: 1rem 0; border-bottom: 2px solid #e0e0e0; margin-bottom: 1rem;">
-    <h3>Finance Filters</h3>
-</div>
-""", unsafe_allow_html=True)
+# Finance Dashboard Filters - Always Accessible
+with st.expander("🔧 Finance Filters - Click to Expand/Collapse", expanded=True):
+    col1, col2, col3, col4 = st.columns(4)
 
-col1, col2, col3, col4 = st.columns(4)
+    with col1:
+        from_date = st.date_input(
+            "From Date", 
+            value=dt.date.today() - dt.timedelta(days=30),
+            help="Select start date for analysis"
+        )
 
-with col1:
-    from_date = st.date_input(
-        "From Date", 
-        value=dt.date.today() - dt.timedelta(days=30),
-        help="Select start date for analysis"
-    )
+    with col2:
+        to_date = st.date_input(
+            "To Date", 
+            value=dt.date.today(),
+            help="Select end date for analysis"
+        )
 
-with col2:
-    to_date = st.date_input(
-        "To Date", 
-        value=dt.date.today(),
-        help="Select end date for analysis"
-    )
+    with col3:
+        department = st.selectbox(
+            "Department",
+            options=["All", "Finance", "Procurement", "IT", "HR", "Operations", "Marketing", "Sales", "Legal"],
+            help="Filter by specific department"
+        )
 
-with col3:
-    department = st.selectbox(
-        "Department",
-        options=["All", "Finance", "Procurement", "IT", "HR", "Operations", "Marketing", "Sales", "Legal"],
-        help="Filter by specific department"
-    )
+    with col4:
+        transaction_type = st.selectbox(
+            "Transaction Type",
+            options=["All", "Revenue", "Expense"],
+            help="Filter by transaction type"
+        )
 
-with col4:
-    transaction_type = st.selectbox(
-        "Transaction Type",
-        options=["All", "Revenue", "Expense"],
-        help="Filter by transaction type"
-    )
-
-# Get department ID if specific department is selected
-dept_id = None
-if department != "All":
-    dept_mapping = {
-        "Finance": 1, "Procurement": 2, "IT": 3, "HR": 4, "Operations": 5,
-        "Marketing": 6, "Sales": 7, "Legal": 8
-    }
-    dept_id = dept_mapping.get(department)
+    # Get department ID if specific department is selected
+    dept_id = None
+    if department != "All":
+        dept_mapping = {
+            "Finance": 1, "Procurement": 2, "IT": 3, "HR": 4, "Operations": 5,
+            "Marketing": 6, "Sales": 7, "Legal": 8
+        }
+        dept_id = dept_mapping.get(department)
 
 st.markdown("---")
 
