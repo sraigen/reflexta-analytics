@@ -260,8 +260,12 @@ def create_users_table() -> None:
         """)
         
         # Check if any users exist
-        user_count_result = conn.query("SELECT COUNT(*) as count FROM users")
-        user_count = user_count_result.iloc[0]['count'] if not user_count_result.empty else 0
+        try:
+            user_count_result = conn.query("SELECT COUNT(*) as count FROM users")
+            user_count = user_count_result.iloc[0]['count'] if not user_count_result.empty else 0
+        except Exception:
+            # If query fails, assume table is empty
+            user_count = 0
         
         # Create default admin user if no users exist
         if user_count == 0:
@@ -278,7 +282,8 @@ def create_users_table() -> None:
             })
         
     except Exception as e:
-        st.error(f"Error creating users table: {str(e)}")
+        st.warning(f"Authentication setup issue: {str(e)}")
+        st.info("💡 The users table will be created when you first try to log in.")
 
 
 def require_auth(func):

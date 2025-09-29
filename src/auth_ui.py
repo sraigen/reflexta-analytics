@@ -189,13 +189,7 @@ def render_login_form() -> None:
             key="login_password"
         )
         
-        col1, col2 = st.columns([1, 1])
-        
-        with col1:
-            remember_me = st.checkbox("Remember me", key="remember_me")
-        
-        with col2:
-            forgot_password = st.button("Forgot Password?", key="forgot_password")
+        remember_me = st.checkbox("Remember me", key="remember_me")
         
         login_submitted = st.form_submit_button(
             "🚀 Sign In",
@@ -215,8 +209,11 @@ def render_login_form() -> None:
                     st.error(f"❌ {result['message']}")
             else:
                 st.error("❌ Please fill in all fields.")
-        
-        if forgot_password:
+    
+    # Forgot password button outside the form
+    col1, col2, col3 = st.columns([1, 1, 1])
+    with col2:
+        if st.button("Forgot Password?", key="forgot_password", use_container_width=True):
             st.info("💡 Contact your administrator to reset your password.")
     
     st.markdown("""
@@ -569,6 +566,12 @@ def render_auth_guard() -> bool:
             </p>
         </div>
         """, unsafe_allow_html=True)
+        
+        # Try to create users table if it doesn't exist
+        try:
+            create_users_table()
+        except Exception:
+            pass  # Ignore errors, let the login form handle it
         
         # Show login form
         render_login_form()
