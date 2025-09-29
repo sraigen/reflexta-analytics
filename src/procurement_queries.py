@@ -48,51 +48,6 @@ def get_procurement_summary(from_dt: date, to_dt: date, dept_id: Optional[int] =
 
 
 @st.cache_data(ttl=60, show_spinner=False)
-def get_procurement_transactions(from_dt: date, to_dt: date, dept_id: Optional[int] = None, order_status: Optional[str] = None) -> pd.DataFrame:
-    """Get all procurement transactions for drill-down analysis."""
-    
-    params = {"from_dt": from_dt, "to_dt": to_dt}
-    where_dept = ""
-    where_status = ""
-    
-    if dept_id:
-        where_dept = " AND o.dept_id = :dept_id"
-        params["dept_id"] = dept_id
-    
-    if order_status and order_status != "All":
-        where_status = " AND o.status = :order_status"
-        params["order_status"] = order_status
-    
-    sql = f"""
-    SELECT 
-        o.order_id,
-        o.order_date as date,
-        o.total_amount as amount,
-        o.notes as description,
-        pc.category_name as category,
-        o.status,
-        pv.vendor_name,
-        COALESCE(fd.dept_name, 'General') as department,
-        'General' as sub_department
-    FROM procurement_orders o
-    LEFT JOIN finance_departments fd ON o.dept_id = fd.dept_id
-    LEFT JOIN procurement_vendors pv ON o.vendor_id = pv.vendor_id
-    LEFT JOIN procurement_categories pc ON o.category_id = pc.category_id
-    WHERE o.order_date BETWEEN :from_dt AND :to_dt
-    {where_dept}
-    {where_status}
-    ORDER BY o.order_date DESC
-    """
-    
-    try:
-        conn = get_conn()
-        return conn.query(sql, params=params)
-    except Exception as e:
-        st.error(f"Error fetching procurement transactions: {str(e)}")
-        return pd.DataFrame()
-
-
-@st.cache_data(ttl=60, show_spinner=False)
 def get_procurement_kpis(from_dt: date, to_dt: date, dept_id: Optional[int] = None) -> pd.DataFrame:
     """Get key procurement KPIs with growth calculations."""
     
