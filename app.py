@@ -10,20 +10,21 @@ from src.finance_queries import get_finance_kpis, get_finance_summary
 from src.procurement_queries import get_procurement_kpis, get_procurement_summary
 from src.ui import kpi_row, section_header, empty_state
 
-# Professional CSS for enterprise UI
+# Luxury Professional CSS for Enterprise UI
 st.markdown("""
 <style>
     .main-header {
-        background: linear-gradient(135deg, #1e3c72 0%, #2a5298 50%, #2c3e50 100%);
-        padding: 1.5rem 1.5rem;
-        border-radius: 8px;
-        margin-bottom: 1.5rem;
+        background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 25%, #16213e 50%, #0f3460 75%, #533483 100%);
+        padding: 2rem 2rem;
+        border-radius: 16px;
+        margin-bottom: 2rem;
         color: white;
         text-align: center;
-        border: 1px solid #34495e;
-        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.05);
         position: relative;
         overflow: hidden;
+        backdrop-filter: blur(10px);
     }
     
     .main-header::before {
@@ -39,12 +40,16 @@ st.markdown("""
     
     .main-header h1 {
         margin: 0;
-        font-size: 2.5rem;
-        font-weight: 700;
-        letter-spacing: -1px;
-        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        font-size: 3rem;
+        font-weight: 800;
+        letter-spacing: -2px;
+        text-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
         position: relative;
         z-index: 1;
+        background: linear-gradient(45deg, #ffffff, #e2e8f0);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
     }
     
     .main-header p {
@@ -337,11 +342,14 @@ st.markdown("""
     
     .sidebar-logo {
         text-align: center;
-        margin-bottom: 1.5rem;
-        padding: 1rem;
-        background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
-        border-radius: 8px;
-        margin: 0 0.5rem 1.5rem 0.5rem;
+        margin-bottom: 2rem;
+        padding: 2rem 1.5rem;
+        background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 25%, #16213e 50%, #0f3460 75%, #533483 100%);
+        border-radius: 16px;
+        margin: 0 0.5rem 2rem 0.5rem;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        backdrop-filter: blur(10px);
     }
     
     .sidebar-logo img {
@@ -352,14 +360,17 @@ st.markdown("""
     .sidebar-logo h3 {
         color: white;
         margin: 0;
-        font-size: 1rem;
-        font-weight: 600;
+        font-size: 1.2rem;
+        font-weight: 700;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        letter-spacing: -0.5px;
     }
     
     .sidebar-logo p {
-        color: rgba(255, 255, 255, 0.8);
-        margin: 0;
-        font-size: 0.8rem;
+        color: rgba(255, 255, 255, 0.9);
+        margin: 0.5rem 0 0 0;
+        font-size: 0.9rem;
+        font-weight: 500;
     }
     
     /* Navigation links styling */

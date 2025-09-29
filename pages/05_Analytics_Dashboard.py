@@ -20,25 +20,51 @@ st.set_page_config(page_title="Analytics Dashboard", layout="wide")
 st.markdown("""
 <style>
     .analytics-header {
-        background: linear-gradient(90deg, #2c3e50 0%, #34495e 100%);
+        background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 25%, #16213e 50%, #0f3460 75%, #533483 100%);
         color: white;
-        padding: 2rem;
-        border-radius: 10px;
+        padding: 2.5rem 2rem;
+        border-radius: 16px;
         margin-bottom: 2rem;
         text-align: center;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .analytics-header::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(45deg, rgba(255,255,255,0.1) 0%, transparent 50%);
+        pointer-events: none;
     }
     
     .analytics-header h1 {
         margin: 0;
-        font-size: 2.5rem;
-        font-weight: 700;
+        font-size: 3rem;
+        font-weight: 800;
+        letter-spacing: -2px;
+        text-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+        position: relative;
+        z-index: 1;
+        background: linear-gradient(45deg, #ffffff, #e2e8f0);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
     }
     
     .analytics-header p {
         margin: 0.5rem 0 0 0;
         font-size: 1.2rem;
         opacity: 0.9;
+        font-weight: 500;
+        position: relative;
+        z-index: 1;
     }
     
     .section-header {
