@@ -931,8 +931,8 @@ try:
     </div>
     """, unsafe_allow_html=True)
 
-# Render global AI chat
-render_global_ai_chat()
+    # Render global AI chat
+    render_global_ai_chat()
         
 except Exception as exc:  # noqa: BLE001
     st.error(f"Database Error: Failed to load data: {exc}")
