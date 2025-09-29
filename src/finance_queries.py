@@ -118,7 +118,7 @@ def get_finance_transactions(from_dt: date, to_dt: date, dept_id: Optional[int] 
     
     try:
         conn = get_conn()
-        return pd.read_sql(sql, conn, params=params)
+        return conn.query(sql, params=params)
     except Exception as e:
         st.error(f"Error fetching finance transactions: {str(e)}")
         return pd.DataFrame()

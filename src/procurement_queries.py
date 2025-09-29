@@ -84,7 +84,7 @@ def get_procurement_transactions(from_dt: date, to_dt: date, dept_id: Optional[i
     
     try:
         conn = get_conn()
-        return pd.read_sql(sql, conn, params=params)
+        return conn.query(sql, params=params)
     except Exception as e:
         st.error(f"Error fetching procurement transactions: {str(e)}")
         return pd.DataFrame()
