@@ -1,6 +1,10 @@
-from __future__ import annotations
+#!/usr/bin/env python3
+"""
+Procurement Analytics Queries for Reflexta Analytics Platform
+Optimized database queries with caching and error handling.
+"""
 
-"""Procurement module query functions with caching."""
+from __future__ import annotations
 
 from datetime import date
 from typing import Optional

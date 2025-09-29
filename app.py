@@ -1,7 +1,15 @@
+#!/usr/bin/env python3
+"""
+Reflexta Data Intelligence - Enterprise Analytics Platform
+Main Application Entry Point
+
+This is the main Streamlit application for the Reflexta Analytics Platform.
+It provides executive dashboards, KPI monitoring, and business intelligence.
+"""
+
 from __future__ import annotations
 
 import datetime as dt
-
 import pandas as pd
 import streamlit as st
 
@@ -11,6 +19,14 @@ from src.procurement_queries import get_procurement_kpis, get_procurement_summar
 from src.ui import kpi_row, section_header, empty_state
 from src.sidebar_ai_chat import render_sidebar_ai_chat
 from src.enhanced_ai_assistant import get_enhanced_ai_assistant
+
+# Page configuration
+st.set_page_config(
+    page_title="Reflexta Analytics Platform",
+    page_icon="📊",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
 
 # Initialize AI assistant
 if "ai_assistant" not in st.session_state:
@@ -935,5 +951,11 @@ try:
     render_sidebar_ai_chat()
         
 except Exception as exc:  # noqa: BLE001
-    st.error(f"Database Error: Failed to load data: {exc}")
-    st.info("Please check your database connection and ensure the Finance and Procurement tables exist.")
+    st.error(f"🚨 Application Error: {exc}")
+    st.info("💡 Please check your database connection and ensure the Finance and Procurement tables exist.")
+    
+    # Show error details in expander for debugging
+    with st.expander("🔧 Technical Details", expanded=False):
+        st.code(f"Error Type: {type(exc).__name__}")
+        st.code(f"Error Message: {str(exc)}")
+        st.info("If this error persists, please contact the system administrator.")

@@ -1,6 +1,10 @@
-from __future__ import annotations
+#!/usr/bin/env python3
+"""
+UI Components for Reflexta Analytics Platform
+Professional UI helpers for Streamlit layout and KPIs.
+"""
 
-"""UI helpers for Streamlit layout and KPIs."""
+from __future__ import annotations
 
 from typing import Optional
 
