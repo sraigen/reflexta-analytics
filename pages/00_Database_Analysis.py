@@ -445,6 +445,10 @@ except Exception as e:
     st.error(f"Error loading database analysis: {str(e)}")
     st.info("Please check your database connection and try again.")
 
+# Render global AI chat
+from src.global_ai_chat import render_global_ai_chat
+render_global_ai_chat()
+
 # Footer
 st.markdown("---")
 st.markdown("""

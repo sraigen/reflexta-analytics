@@ -9,7 +9,7 @@ from src.db import health_check
 from src.finance_queries import get_finance_kpis, get_finance_summary
 from src.procurement_queries import get_procurement_kpis, get_procurement_summary
 from src.ui import kpi_row, section_header, empty_state
-from src.popup_chat import render_popup_chat
+from src.global_ai_chat import render_global_ai_chat
 from src.enhanced_ai_assistant import get_enhanced_ai_assistant
 
 # Initialize AI assistant
@@ -931,8 +931,8 @@ try:
     </div>
     """, unsafe_allow_html=True)
 
-    # Render popup AI chat
-    render_popup_chat()
+# Render global AI chat
+render_global_ai_chat()
         
 except Exception as exc:  # noqa: BLE001
     st.error(f"Database Error: Failed to load data: {exc}")
