@@ -9,7 +9,7 @@ from src.db import health_check
 from src.finance_queries import get_finance_kpis, get_finance_summary
 from src.procurement_queries import get_procurement_kpis, get_procurement_summary
 from src.ui import kpi_row, section_header, empty_state
-from src.chat_ui import render_chat_interface, render_quick_help
+from src.popup_chat import render_popup_chat
 from src.ai_assistant import get_ai_assistant
 
 # Initialize AI assistant
@@ -799,18 +799,24 @@ with st.sidebar:
     current_time = dt.datetime.now().strftime("%H:%M:%S")
     st.info(f"🕐 Last Updated: {current_time}")
     
-    # AI Assistant Section
-    st.markdown("""
-    <div class="sidebar-section">
-        <h3>🤖 AI Assistant</h3>
-    </div>
-    """, unsafe_allow_html=True)
-    
-    # Render AI chat interface
-    render_chat_interface()
-    
-    # Quick help section
-    render_quick_help()
+        # AI Assistant Section
+        st.markdown("""
+        <div class="sidebar-section">
+            <h3>🤖 AI Assistant</h3>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        # AI Assistant button
+        if st.button("🤖 Open AI Assistant", use_container_width=True, key="open_ai_btn"):
+            st.session_state.popup_chat_open = True
+            st.rerun()
+        
+        # Quick help section
+        st.markdown("""
+        <div class="sidebar-info">
+            <p>💡 Click "Open AI Assistant" for intelligent help with dashboards, KPIs, and data interpretation.</p>
+        </div>
+        """, unsafe_allow_html=True)
 
 if not health_check():
     st.error("Database connection failed. Please check your connection settings.")
@@ -924,6 +930,9 @@ try:
         </p>
     </div>
     """, unsafe_allow_html=True)
+
+# Render popup AI chat
+render_popup_chat()
         
 except Exception as exc:  # noqa: BLE001
     st.error(f"Database Error: Failed to load data: {exc}")
