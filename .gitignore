@@ -137,6 +137,28 @@ tmp/
 .streamlit/secrets.toml  # Keep template, ignore actual secrets
 .streamlit/secrets.json
 
+# Security - Credentials and API Keys
+.env
+.env.*
+*.key
+*.pem
+*.p12
+*.pfx
+secrets.json
+credentials.json
+config.json
+
+# API Keys and Tokens
+*api_key*
+*secret*
+*token*
+*password*
+*credential*
+
+# Database credentials
+database_credentials.*
+db_config.*
+
 # Local development
 local_*
 dev_*

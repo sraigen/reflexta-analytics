@@ -30,8 +30,8 @@ def get_database_url():
             pass
     
     if not db_url:
-        # Default fallback
-        db_url = "postgresql+psycopg://postgres:Sit%401125@localhost:5432/Test"
+        # Default fallback - use environment variable
+        db_url = os.getenv("DATABASE_URL", "postgresql+psycopg://username:password@localhost:5432/database_name")
     
     return db_url
 

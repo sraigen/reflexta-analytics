@@ -14,12 +14,21 @@ from psycopg import sql
 
 def get_connection():
     """Get database connection."""
+    import os
+    
+    # Use environment variables for security
+    host = os.getenv("DB_HOST", "localhost")
+    port = int(os.getenv("DB_PORT", "5432"))
+    user = os.getenv("DB_USER", "postgres")
+    password = os.getenv("DB_PASSWORD", "password")
+    dbname = os.getenv("DB_NAME", "Test")
+    
     return psycopg.connect(
-        host="localhost",
-        port=5432,
-        user="postgres",
-        password="Sit@1125",
-        dbname="Test"
+        host=host,
+        port=port,
+        user=user,
+        password=password,
+        dbname=dbname
     )
 
 
