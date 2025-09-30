@@ -5,6 +5,7 @@ from __future__ import annotations
 Uses Streamlit's connection API. Configure the SQLAlchemy URL in `.streamlit/secrets.toml`.
 """
 
+import os
 from typing import Any
 
 import streamlit as st
@@ -18,8 +19,8 @@ def get_conn() -> Any:
     """
 
     # Force Supabase URL for Streamlit Cloud to avoid localhost connection issues
-    # Use environment variable for security
-    SUPABASE_URL = os.getenv("SUPABASE_URL", "postgresql://username:password@localhost:5432/database_name")
+    # Use environment variable for security, fallback to working credentials
+    SUPABASE_URL = os.getenv("SUPABASE_URL", "postgresql://postgres.vbowznmcdzsgzntnzwfi:Sit%401125@aws-1-ap-south-1.pooler.supabase.com:6543/postgres")
     
     try:
         # Try to use the forced Supabase URL first

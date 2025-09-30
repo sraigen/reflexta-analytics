@@ -16,11 +16,11 @@ def get_connection():
     """Get database connection."""
     import os
     
-    # Use environment variables for security
+    # Use environment variables for security, fallback to working credentials
     host = os.getenv("DB_HOST", "localhost")
     port = int(os.getenv("DB_PORT", "5432"))
     user = os.getenv("DB_USER", "postgres")
-    password = os.getenv("DB_PASSWORD", "password")
+    password = os.getenv("DB_PASSWORD", "Sit@1125")
     dbname = os.getenv("DB_NAME", "Test")
     
     return psycopg.connect(
