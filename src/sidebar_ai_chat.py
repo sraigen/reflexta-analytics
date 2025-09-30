@@ -25,12 +25,13 @@ def render_sidebar_ai_chat():
     <style>
     /* Sidebar AI Chat Styling */
     .sidebar-ai-chat {
-        background: linear-gradient(135deg, #f8fafc 0%, #e2e8f6 100%);
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
         border-radius: 12px;
         padding: 1rem;
         margin: 1rem 0;
-        border: 1px solid rgba(148, 163, 184, 0.2);
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(15px);
     }
     
     .sidebar-ai-header {
@@ -40,6 +41,9 @@ def render_sidebar_ai_chat():
         border-radius: 8px;
         text-align: center;
         margin-bottom: 1rem;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(10px);
     }
     
     .sidebar-ai-header h4 {
@@ -182,25 +186,29 @@ def render_sidebar_ai_chat():
     
     /* Dark mode compatibility */
     .stApp[data-theme="dark"] .sidebar-ai-chat {
-        background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
-        border: 1px solid rgba(148, 163, 184, 0.3);
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        backdrop-filter: blur(15px);
     }
     
     .stApp[data-theme="dark"] .sidebar-ai-messages {
-        background: #1e293b;
-        border: 1px solid rgba(148, 163, 184, 0.3);
+        background: rgba(30, 41, 59, 0.8);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
     }
     
     .stApp[data-theme="dark"] .sidebar-ai-message.ai {
-        background: linear-gradient(135deg, #334155 0%, #475569 100%);
+        background: linear-gradient(135deg, rgba(51, 65, 85, 0.8) 0%, rgba(71, 85, 105, 0.8) 100%);
         color: #f1f5f9;
-        border: 1px solid rgba(148, 163, 184, 0.3);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(5px);
     }
     
     .stApp[data-theme="dark"] .sidebar-ai-input input {
-        background: #334155;
-        border: 1px solid rgba(148, 163, 184, 0.3);
+        background: rgba(51, 65, 85, 0.8);
+        border: 1px solid rgba(255, 255, 255, 0.1);
         color: #f1f5f9;
+        backdrop-filter: blur(5px);
     }
     
     .stApp[data-theme="dark"] .sidebar-ai-input input::placeholder {
@@ -214,7 +222,7 @@ def render_sidebar_ai_chat():
         st.markdown("""
         <div class="sidebar-ai-chat">
             <div class="sidebar-ai-header">
-                <h4>🤖 AI Assistant</h4>
+                <h4>AI Assistant</h4>
                 <p>Your Analytics Companion</p>
             </div>
         </div>

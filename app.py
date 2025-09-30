@@ -379,27 +379,120 @@ st.markdown("""
         color: #bdc3c7 !important;
     }
     
-    /* Sidebar styling */
+    /* Enhanced Sidebar styling with glass morphism */
     .sidebar .sidebar-content {
-        background: linear-gradient(180deg, #2c3e50 0%, #34495e 100%);
+        background: linear-gradient(180deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+        backdrop-filter: blur(20px);
+        border-right: 1px solid rgba(255, 255, 255, 0.1);
+        box-shadow: inset -1px 0 20px rgba(0, 0, 0, 0.1);
     }
     
     .sidebar .sidebar-content .block-container {
-        padding-top: 1rem;
+        padding-top: 0.5rem;
+    }
+    
+    /* Compact sidebar spacing */
+    .sidebar .sidebar-content {
+        padding: 0.5rem;
+    }
+    
+    /* Reduce spacing between sidebar elements */
+    .sidebar .stMarkdown {
+        margin-bottom: 0.3rem !important;
+    }
+    
+    .sidebar .stButton {
+        margin-bottom: 0.2rem !important;
+    }
+    
+    /* Enhanced status indicators with glass morphism */
+    .sidebar .stSuccess, .sidebar .stError, .sidebar .stInfo {
+        padding: 0.4rem 0.6rem !important;
+        margin: 0.2rem 0 !important;
+        font-size: 0.8rem !important;
+        border-radius: 8px !important;
+        backdrop-filter: blur(10px) !important;
+        border: 1px solid rgba(255, 255, 255, 0.2) !important;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+        transition: all 0.3s ease !important;
+    }
+    
+    .sidebar .stSuccess {
+        background: linear-gradient(135deg, rgba(34, 197, 94, 0.2) 0%, rgba(34, 197, 94, 0.1) 100%) !important;
+        border-color: rgba(34, 197, 94, 0.3) !important;
+    }
+    
+    .sidebar .stError {
+        background: linear-gradient(135deg, rgba(239, 68, 68, 0.2) 0%, rgba(239, 68, 68, 0.1) 100%) !important;
+        border-color: rgba(239, 68, 68, 0.3) !important;
+    }
+    
+    .sidebar .stInfo {
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.2) 0%, rgba(59, 130, 246, 0.1) 100%) !important;
+        border-color: rgba(59, 130, 246, 0.3) !important;
+    }
+    
+    /* Compact sidebar text */
+    .sidebar .stMarkdown p {
+        margin: 0.2rem 0 !important;
+        font-size: 0.8rem !important;
+        line-height: 1.3 !important;
+    }
+    
+    /* Beautiful scrollbar for sidebar */
+    .sidebar ::-webkit-scrollbar {
+        width: 6px;
+    }
+    
+    .sidebar ::-webkit-scrollbar-track {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 3px;
+    }
+    
+    .sidebar ::-webkit-scrollbar-thumb {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 3px;
+        transition: all 0.3s ease;
+    }
+    
+    .sidebar ::-webkit-scrollbar-thumb:hover {
+        background: linear-gradient(135deg, #7c3aed 0%, #8b5cf6 100%);
+    }
+    
+    /* Subtle pulse animation for active elements */
+    @keyframes subtle-pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.8; }
+    }
+    
+    .sidebar-section:hover .sidebar-button {
+        animation: subtle-pulse 2s infinite;
+    }
+    
+    /* Enhanced focus states */
+    .sidebar-button:focus {
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.3), 0 4px 15px rgba(102, 126, 234, 0.3);
     }
     
     .sidebar-logo {
         text-align: center;
-        margin-bottom: 2rem;
-        padding: 2.5rem 1.5rem;
+        margin-bottom: 1.5rem;
+        padding: 1.5rem 1rem;
         background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 25%, #16213e 50%, #0f3460 75%, #533483 100%);
-        border-radius: 20px;
-        margin: 0 0.5rem 2rem 0.5rem;
+        border-radius: 16px;
+        margin: 0 0.3rem 1.5rem 0.3rem;
         border: 1px solid rgba(255, 255, 255, 0.1);
-        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.05);
-        backdrop-filter: blur(15px);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(20px);
         position: relative;
         overflow: hidden;
+        transition: all 0.3s ease;
+    }
+    
+    .sidebar-logo:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1);
     }
     
     .sidebar-logo::before {
@@ -414,8 +507,8 @@ st.markdown("""
     }
     
     .sidebar-logo img {
-        height: 50px;
-        margin-bottom: 1rem;
+        height: 40px;
+        margin-bottom: 0.8rem;
         filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
         position: relative;
         z-index: 1;
@@ -424,7 +517,7 @@ st.markdown("""
     .sidebar-logo h3 {
         color: white;
         margin: 0;
-        font-size: 1.4rem;
+        font-size: 1.2rem;
         font-weight: 800;
         text-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
         letter-spacing: -0.5px;
@@ -438,65 +531,138 @@ st.markdown("""
     
     .sidebar-logo p {
         color: rgba(255, 255, 255, 0.9);
-        margin: 0.5rem 0 0 0;
-        font-size: 1rem;
+        margin: 0.3rem 0 0 0;
+        font-size: 0.9rem;
         font-weight: 500;
         position: relative;
         z-index: 1;
     }
     
     .sidebar-section {
-        background: linear-gradient(135deg, #f8fafc 0%, #e2e8f6 100%);
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
         border-radius: 12px;
-        padding: 1.5rem;
-        margin: 1rem 0.5rem;
-        border: 1px solid rgba(148, 163, 184, 0.2);
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-        backdrop-filter: blur(10px);
+        padding: 0.8rem;
+        margin: 0.5rem 0.3rem;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(15px);
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .sidebar-section::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(45deg, rgba(255, 255, 255, 0.1) 0%, transparent 50%);
+        pointer-events: none;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+    
+    .sidebar-section:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        border-color: rgba(255, 255, 255, 0.15);
+    }
+    
+    .sidebar-section:hover::before {
+        opacity: 1;
     }
     
     .sidebar-section h3 {
-        color: #1e293b;
-        margin: 0 0 1rem 0;
-        font-size: 1.1rem;
+        color: #ffffff;
+        margin: 0 0 0.6rem 0;
+        font-size: 1rem;
         font-weight: 700;
         text-align: center;
         letter-spacing: -0.3px;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        position: relative;
+        z-index: 1;
     }
     
     .sidebar-button {
-        background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         color: white;
         border: none;
         border-radius: 10px;
-        padding: 0.8rem 1rem;
+        padding: 0.6rem 0.8rem;
         font-weight: 600;
-        font-size: 0.9rem;
-        transition: all 0.3s ease;
-        box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
-        margin-bottom: 0.5rem;
+        font-size: 0.85rem;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+        margin-bottom: 0.4rem;
         width: 100%;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .sidebar-button::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+        transition: left 0.5s;
+    }
+    
+    .sidebar-button:hover::before {
+        left: 100%;
     }
     
     .sidebar-button:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
+        transform: translateY(-3px) scale(1.02);
+        box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+        background: linear-gradient(135deg, #7c3aed 0%, #8b5cf6 100%);
     }
     
     .sidebar-info {
-        background: linear-gradient(135deg, #e0f2fe 0%, #b3e5fc 100%);
-        border: 1px solid #81d4fa;
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(147, 197, 253, 0.05) 100%);
+        border: 1px solid rgba(59, 130, 246, 0.15);
         border-radius: 10px;
-        padding: 1rem;
-        margin: 1rem 0.5rem;
+        padding: 0.6rem;
+        margin: 0.5rem 0.3rem;
         text-align: center;
+        backdrop-filter: blur(10px);
+        box-shadow: 0 2px 10px rgba(59, 130, 246, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .sidebar-info::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(45deg, rgba(59, 130, 246, 0.1) 0%, transparent 50%);
+        pointer-events: none;
+    }
+    
+    .sidebar-info:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 15px rgba(59, 130, 246, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        border-color: rgba(59, 130, 246, 0.25);
     }
     
     .sidebar-info p {
-        color: #0277bd;
+        color: #60a5fa;
         margin: 0;
-        font-size: 0.9rem;
+        font-size: 0.8rem;
         font-weight: 500;
+        line-height: 1.3;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+        position: relative;
+        z-index: 1;
     }
     
     /* Navigation links styling */
@@ -762,12 +928,6 @@ with st.sidebar:
     if st.button("🔄 Refresh Data", use_container_width=True, key="refresh_btn"):
         st.rerun()
     
-    if st.button("📊 Export Report", use_container_width=True, key="export_btn"):
-        st.success("Report export feature coming soon!")
-    
-    if st.button("⚙️ Settings", use_container_width=True, key="settings_btn"):
-        st.info("Settings panel coming soon!")
-    
     # Navigation Section
     st.markdown("""
     <div class="sidebar-section">
@@ -791,12 +951,6 @@ with st.sidebar:
     if st.button("🗄️ Database Analysis", use_container_width=True, key="db_analysis"):
         st.switch_page("pages/00_Database_Analysis.py")
     
-    # Information Section
-    st.markdown("""
-    <div class="sidebar-info">
-        <p>💡 Navigate to specific dashboards for detailed analytics and filtering options.</p>
-    </div>
-    """, unsafe_allow_html=True)
     
     # Status Section
     st.markdown("""
@@ -815,24 +969,17 @@ with st.sidebar:
     current_time = dt.datetime.now().strftime("%H:%M:%S")
     st.info(f"🕐 Last Updated: {current_time}")
     
-    # AI Assistant Section
-    st.markdown("""
-    <div class="sidebar-section">
-        <h3>🤖 AI Assistant</h3>
-    </div>
-    """, unsafe_allow_html=True)
+    # AI Assistant Section - Simplified
+    #st.markdown("""
+    #<div class="sidebar-section">
+        #<h3>🤖 AI Assistant</h3>
+    #</div>
+    #""", unsafe_allow_html=True)
     
     # AI Assistant button
-    if st.button("🤖 Open AI Assistant", use_container_width=True, key="open_ai_btn"):
-        st.session_state.popup_chat_open = True
-        st.rerun()
-    
-    # Quick help section
-    st.markdown("""
-    <div class="sidebar-info">
-        <p>💡 Click "Open AI Assistant" for intelligent help with dashboards, KPIs, and data interpretation.</p>
-    </div>
-    """, unsafe_allow_html=True)
+    #if st.button("🤖 Open AI Assistant", use_container_width=True, key="open_ai_btn"):
+     #   st.session_state.popup_chat_open = True
+      #  st.rerun()
 
 if not health_check():
     st.error("Database connection failed. Please check your connection settings.")
@@ -915,26 +1062,6 @@ try:
         else:
             st.info("No procurement data available for the selected filters.")
 
-    # Quick Navigation
-    st.markdown('<div class="section-header">Quick Navigation</div>', unsafe_allow_html=True)
-    
-    col1, col2, col3, col4 = st.columns(4)
-    
-    with col1:
-        if st.button("Finance Dashboard", use_container_width=True):
-            st.switch_page("pages/03_Finance_Dashboard.py")
-    
-    with col2:
-        if st.button("Procurement Dashboard", use_container_width=True):
-            st.switch_page("pages/04_Procurement_Dashboard.py")
-    
-    with col3:
-        if st.button("Analytics Dashboard", use_container_width=True):
-            st.switch_page("pages/05_Analytics_Dashboard.py")
-    
-    with col4:
-        if st.button("Database Analysis", use_container_width=True):
-            st.switch_page("pages/00_Database_Analysis.py")
 
     # Professional footer
     st.markdown("""
