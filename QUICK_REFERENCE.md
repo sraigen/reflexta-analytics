@@ -1,5 +1,19 @@
 # 🚀 Quick Reference Card
 
+## 🎨 Modern UI Components
+
+### KPI Indicators
+- **Gradient Cards**: Use `kpi_row()` function for modern animated KPIs
+- **Progress Bars**: Dynamic progress indicators based on data values
+- **Hover Effects**: Interactive hover states with smooth transitions
+- **Color Schemes**: Purple-blue, green, and orange gradients
+
+### Security Features
+- **Environment Variables**: Use `os.getenv()` for all credentials
+- **Secure Fallbacks**: Working credentials as development fallbacks
+- **Git Protection**: `.gitignore` configured for security
+- **Template Files**: Use `env.example` and `secrets.toml.example`
+
 ## 📋 Common Tasks
 
 ### Creating a New Dashboard

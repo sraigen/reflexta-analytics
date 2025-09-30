@@ -16,7 +16,7 @@ import streamlit as st
 from src.db import health_check
 from src.finance_queries import get_finance_kpis, get_finance_summary
 from src.procurement_queries import get_procurement_kpis, get_procurement_summary
-from src.ui import kpi_row, section_header, empty_state
+from src.ui import kpi_row, empty_state
 from src.sidebar_ai_chat import render_sidebar_ai_chat
 from src.enhanced_ai_assistant import get_enhanced_ai_assistant
 
@@ -1001,17 +1001,9 @@ with st.sidebar:
     current_time = dt.datetime.now().strftime("%H:%M:%S")
     st.info(f"🕐 Last Updated: {current_time}")
     
-    # AI Assistant Section - Simplified
-    #st.markdown("""
-    #<div class="sidebar-section">
-        #<h3>🤖 AI Assistant</h3>
-    #</div>
-    #""", unsafe_allow_html=True)
+    # AI Assistant Section - Simplified (handled by render_sidebar_ai_chat)
     
-    # AI Assistant button
-    #if st.button("🤖 Open AI Assistant", use_container_width=True, key="open_ai_btn"):
-     #   st.session_state.popup_chat_open = True
-      #  st.rerun()
+    # AI Assistant functionality handled by render_sidebar_ai_chat()
 
 if not health_check():
     st.error("Database connection failed. Please check your connection settings.")

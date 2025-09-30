@@ -7,11 +7,13 @@ This is a production-grade data visualization web application built with Python,
 ## 🏗️ Architecture
 
 ### Technology Stack
-- **Frontend**: Streamlit 1.32.0+
-- **Backend**: Python 3.10+
+- **Frontend**: Streamlit 1.32.0+ with modern CSS animations
+- **Backend**: Python 3.10+ with secure credential management
 - **Database**: PostgreSQL with SQLAlchemy 2.0+
-- **Visualization**: Plotly Express
-- **Styling**: Custom CSS with luxury design system
+- **Visualization**: Plotly Express with animated KPI indicators
+- **Styling**: Glass morphism design with gradient animations
+- **Security**: Environment variables and secure credential storage
+- **AI Integration**: DeepSeek API for intelligent assistance
 - **Deployment**: Streamlit Cloud + GitHub
 
 ### Project Structure
@@ -46,6 +48,27 @@ data-viz-app/
 ├── QUICK_REFERENCE.md              # Quick reference for developers
 └── DEVELOPER_GUIDE.md             # This file
 ```
+
+## 🎨 Modern UI Components
+
+### KPI Indicators
+The application features modern animated KPI indicators with:
+- **Gradient Backgrounds**: Unique color schemes for each metric
+- **Progress Bars**: Dynamic progress indicators based on data values
+- **Floating Animations**: Subtle background animations for visual appeal
+- **Hover Effects**: Interactive hover states with smooth transitions
+
+### Security Features
+- **Environment Variables**: All credentials stored in environment variables
+- **Secure Fallbacks**: Working credentials as fallbacks for development
+- **Git Protection**: `.gitignore` configured to prevent credential exposure
+- **Template Files**: Example configuration files for secure setup
+
+### Glass Morphism Design
+- **Backdrop Filters**: Modern blur effects for depth
+- **Gradient Overlays**: Sophisticated color transitions
+- **Subtle Borders**: Minimal border styling for clean appearance
+- **Responsive Design**: Optimized for all screen sizes
 
 ## 🚀 Quick Start
 

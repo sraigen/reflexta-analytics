@@ -102,25 +102,6 @@ def kpi_row(order_count: int, total_amount: float, avg_amount: float) -> None:
         """, unsafe_allow_html=True)
 
 
-def section_header(title: str, subtitle: Optional[str] = None) -> None:
-    """Render a consistent section header with luxury styling."""
-
-    st.markdown(f"""
-    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
-                color: white; padding: 1.5rem 2rem; border-radius: 12px; 
-                margin: 2rem 0 1.5rem 0; font-size: 1.4rem; font-weight: 700; 
-                text-align: center; box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15); 
-                border: 1px solid rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px);">
-        {title}
-    </div>
-    """, unsafe_allow_html=True)
-    
-    if subtitle:
-        st.markdown(f"""
-        <div style="text-align: center; color: #64748b; font-size: 1rem; margin-bottom: 1rem;">
-            {subtitle}
-        </div>
-        """, unsafe_allow_html=True)
 
 
 def empty_state(df: pd.DataFrame, message: str = "No data for selected filters.") -> bool:

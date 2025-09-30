@@ -5,11 +5,12 @@ A production-grade data visualization platform built with Python, Streamlit, and
 ## 🎯 Key Features
 
 - **💼 Enterprise-Grade**: Production-ready with professional luxury UI
-- **📊 Comprehensive Analytics**: Finance, Procurement, and Executive dashboards
-- **🎨 Luxury Design**: Sophisticated color palette and modern styling
+- **📊 Modern KPI Indicators**: Animated progress bars and gradient cards
+- **🎨 Contemporary Design**: Glass morphism effects and modern styling
 - **⚡ High Performance**: Optimized queries with intelligent caching
-- **🔒 Secure**: Parameterized queries and secure database connections
+- **🔒 Secure**: Environment variables and secure credential management
 - **📱 Responsive**: Works seamlessly across all devices
+- **🤖 AI Assistant**: Intelligent chatbot with DeepSeek integration
 
 ## 🚀 Features
 
@@ -21,12 +22,13 @@ A production-grade data visualization platform built with Python, Streamlit, and
 - **🗄️ Database Analysis**: Schema exploration and data quality checks
 
 ### Professional Features
-- **🎨 Enterprise UI**: Clean, professional interface with responsive design
+- **🎨 Modern UI**: Glass morphism design with animated KPI indicators
 - **⚡ Real-time Data**: Live database connections with intelligent caching
 - **📊 Interactive Charts**: Plotly-powered visualizations with professional styling
 - **🔍 Advanced Analytics**: Executive summaries, performance heatmaps, trend analysis
 - **🤖 AI Assistant**: Intelligent chatbot powered by DeepSeek API for dashboard help
 - **📱 Responsive Design**: Works seamlessly on desktop, tablet, and mobile
+- **🔒 Security**: Environment variables and secure credential management
 
 ## 🏗️ Architecture
 
