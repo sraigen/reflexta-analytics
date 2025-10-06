@@ -25,8 +25,10 @@ from src.finance_charts import (
     cash_flow_chart
 )
 from src.ui import empty_state
+from src.auth import require_login
 
 st.set_page_config(page_title="Finance Dashboard", layout="wide")
+require_login()
 
 # Finance Dashboard Filters - Sidebar Approach
 with st.sidebar:

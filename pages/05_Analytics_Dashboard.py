@@ -15,6 +15,8 @@ from src.procurement_queries import get_procurement_kpis, get_procurement_trends
 from src.ui import empty_state
 
 st.set_page_config(page_title="Analytics Dashboard", layout="wide")
+from src.auth import require_login
+require_login()
 
 # Professional CSS for Analytics Dashboard
 st.markdown("""

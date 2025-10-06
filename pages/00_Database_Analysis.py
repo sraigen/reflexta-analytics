@@ -13,6 +13,8 @@ from src.db import get_conn, health_check
 from src.ui import empty_state
 
 st.set_page_config(page_title="Database Analysis", layout="wide")
+from src.auth import require_login
+require_login()
 
 # Professional CSS for Database Analysis
 st.markdown("""

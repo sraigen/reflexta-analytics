@@ -29,6 +29,8 @@ from src.procurement_charts import (
 from src.ui import empty_state
 
 st.set_page_config(page_title="Procurement Dashboard", layout="wide")
+from src.auth import require_login
+require_login()
 
 # Procurement Dashboard Filters - Sidebar Approach
 with st.sidebar:

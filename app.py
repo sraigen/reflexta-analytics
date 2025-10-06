@@ -17,6 +17,7 @@ from src.db import health_check
 from src.finance_queries import get_finance_kpis, get_finance_summary
 from src.procurement_queries import get_procurement_kpis, get_procurement_summary
 from src.ui import kpi_row, empty_state
+from src.auth import require_login, logout
 from src.sidebar_ai_chat import render_sidebar_ai_chat
 from src.enhanced_ai_assistant import get_enhanced_ai_assistant
 
@@ -27,6 +28,9 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded"
 )
+
+# Require authentication before rendering anything else
+require_login()
 
 # Initialize AI assistant
 if "ai_assistant" not in st.session_state:
@@ -889,16 +893,7 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-st.set_page_config(
-    page_title="Enterprise Analytics Dashboard", 
-    layout="wide",
-    initial_sidebar_state="expanded",
-    menu_items={
-        'Get Help': 'https://docs.streamlit.io',
-        'Report a bug': "https://github.com/streamlit/streamlit/issues",
-        'About': "# Enterprise Analytics Dashboard\nBuilt with Streamlit, PostgreSQL, and Plotly"
-    }
-)
+# Note: page config is already set at the top of the file.
 
 # Professional header with company branding
 try:
